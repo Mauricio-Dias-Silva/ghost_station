@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GHOST STATION // REMOTE SENSOR</title>
+    <style>
+        /* --- ESTÉTICA GLOBAL (CYBERPUNK / SCADA) --- */
+        :root {
+            --primary: #00ff41; /* Verde Matrix */
+            --alert: #ff003c;   /* Vermelho Alerta */
+            --bg: #050505;      /* Preto Fundo */
+            --panel: #0a0a0a;   /* Preto Painel */
+            --grid: #1a1a1a;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--primary);
+            font-family: 'Consolas', 'Courier New', monospace;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            background-image: 
+                linear-gradient(var(--grid) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        /* Efeito CRT */
+        .crt-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 2px, 3px 100%; pointer-events: none; z-index: 999;
+        }
+
+        /* --- LAYOUT --- */
+        .dashboard {
+            display: grid;
+            grid-template-columns: 300px 1fr 300px;
+            grid-template-rows: 60px 1fr 200px;
+            gap: 10px; height: 100vh; padding: 10px; box-sizing: border-box;
+        }
+
+        .panel {
+            background: rgba(10, 10, 10, 0.9);
+            border: 1px solid #333; padding: 10px; position: relative;
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.05);
+        }
+        /* Cantoneiras */
+        .panel::before { content: ''; position: absolute; top: -1px; left: -1px; width: 10px; height: 10px; border-top: 2px solid var(--primary); border-left: 2px solid var(--primary); }
+        .panel::after { content: ''; position: absolute; bottom: -1px; right: -1px; width: 10px; height: 10px; border-bottom: 2px solid var(--primary); border-right: 2px solid var(--primary); }
+
+        h2 { margin: 0 0 10px 0; font-size: 12px; text-transform: uppercase; letter-spacing: 2px; border-bottom: 1px solid #333; padding-bottom: 5px; color: #888; }
+
+        /* Header */
+        .header { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary); }
+        .logo { font-size: 24px; font-weight: bold; text-shadow: 0 0 5px var(--primary); }
+        .clock { font-size: 18px; }
+
+        /* Esquerda */
+        .col-left { grid-column: 1; grid-row: 2 / -1; display: flex; flex-direction: column; gap: 10px; }
+        canvas#visualizer { width: 100%; height: 80px; background: #000; border: 1px solid #222; }
+        
+        .radar-box { width: 100%; height: 200px; background: radial-gradient(circle, transparent 20%, #111 20%, #111 21%, transparent 21%, transparent 40%, #111 40%, #111 41%, transparent 41%, transparent 60%, #111 60%, #111 61%); border-radius: 50%; border: 1px dashed #333; position: relative; margin: 10px 0; }
+        .radar-line { position: absolute; top: 50%; left: 50%; width: 50%; height: 2px; background: var(--primary); transform-origin: 0% 0%; box-shadow: 0 0 5px var(--primary); }
+
+        /* Centro */
+        .col-center { grid-column: 2; grid-row: 2; display: flex; flex-direction: column; }
+        .video-container { flex-grow: 1; position: relative; background: #000; border: 2px solid #333; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        .video-feed { width: 100%; height: 100%; object-fit: contain; }
+        .video-hud { position: absolute; top: 10px; left: 10px; right: 10px; bottom: 10px; border: 1px solid rgba(0, 255, 65, 0.3); pointer-events: none; }
+        .rec-dot { position: absolute; top: 10px; right: 10px; width: 10px; height: 10px; background: red; border-radius: 50%; box-shadow: 0 0 5px red; animation: blink 1s infinite; }
+        .crosshair { position: absolute; top: 50%; left: 50%; width: 40px; height: 40px; border: 1px solid rgba(0, 255, 65, 0.5); transform: translate(-50%, -50%); }
+        .crosshair::before { content: ''; position: absolute; background: var(--primary); top: 19px; left: 0; width: 40px; height: 1px; }
+        .crosshair::after { content: ''; position: absolute; background: var(--primary); top: 0; left: 19px; width: 1px; height: 40px; }
+
+        /* Direita */
+        .col-right { grid-column: 3; grid-row: 2 / -1; display: flex; flex-direction: column; gap: 10px; }
+        .log-terminal { flex-grow: 1; font-size: 10px; color: #aaa; overflow-y: scroll; border-top: 1px solid #333; padding-top: 5px; }
+        .log-entry { margin-bottom: 2px; }
+        .log-time { color: var(--primary); }
+        .thumb-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; height: 200px; overflow-y: auto; }
+        .thumb-grid img { width: 100%; height: auto; border: 1px solid #444; opacity: 0.7; transition: 0.2s; }
+        .thumb-grid img:hover { opacity: 1; border-color: var(--primary); scale: 1.05; }
+
+        /* Footer */
+        .footer { grid-column: 2; grid-row: 3; display: flex; gap: 10px; padding-top: 10px; }
+        .stat-box { flex: 1; border: 1px solid #333; padding: 5px; text-align: center; }
+        .val-big { font-size: 24px; font-weight: bold; display: block; }
+        .val-label { font-size: 10px; color: #666; }
+
+        .btn-main { background: transparent; border: 2px solid var(--primary); color: var(--primary); padding: 10px 20px; font-family: inherit; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.2s; width: 100%; }
+        .btn-main:hover { background: var(--primary); color: #000; box-shadow: 0 0 15px var(--primary); }
+        
+        input[type=range] { width: 100%; accent-color: var(--primary); margin-top: 5px; }
+
+        @keyframes blink { 0% {opacity: 1;} 50% {opacity: 0;} 100% {opacity: 1;} }
+        @media (max-width: 800px) { .dashboard { grid-template-columns: 1fr; grid-template-rows: auto; height: auto; display: flex; flex-direction: column; } }
+    </style>
+</head>
+<body>
+
+    <div class="crt-overlay"></div>
+
+    <div class="dashboard">
+        
+        <div class="panel header">
+            <div class="logo">GHOST_STATION <span style="font-size: 12px; opacity: 0.7;">// V2.0 REMOTE</span></div>
+            <div class="clock" id="sysClock">00:00:00</div>
+        </div>
+
+        <div class="panel col-left">
+            <h2>ÁUDIO REMOTO (IP CAM)</h2>
+            <canvas id="visualizer"></canvas>
+            
+            <div style="margin-top: 10px;">
+                <label class="val-label">VOLUME MONITOR</label>
+                <input type="range" id="volControl" min="0" max="1" step="0.1" value="0.5">
+            </div>
+
+            <div style="margin-top: 10px;">
+                <span class="val-label">ENERGIA AMBIENTE</span>
+                <span id="currEnergy" class="val-big">0.0</span>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <h2>BUSSOLA MAGNÉTICA</h2>
+                <div class="radar-box">
+                    <div class="radar-line" id="radarNeedle"></div>
+                </div>
+                <div style="text-align: center;">
+                    <span id="magHeading" class="val-big">0°</span>
+                    <span class="val-label">DELTA: <span id="magDelta">0</span></span>
+                    <div style="font-size: 9px; color: #555;">*Requer sensor local</div>
+                </div>
+            </div>
+
+            <button class="btn-main" onclick="startRemoteAudio()">CONECTAR ÁUDIO REMOTO</button>
+            <div id="statusSys" style="text-align: center; margin-top: 10px; color: #555;">AGUARDANDO CONEXÃO</div>
+        </div>
+
+        <div class="panel col-center">
+            <h2>FEED VISUAL PRIMÁRIO [CAM_01]</h2>
+            <div class="video-container">
+                <img src="{% url 'video_feed' %}" class="video-feed">
+                
+                <div class="video-hud">
+                    <div class="rec-dot"></div>
+                    <div class="crosshair"></div>
+                    <div style="position: absolute; bottom: 5px; left: 5px; font-size: 10px;">SRC: 10.143.222.208:8080 | FPS: 30</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <div class="stat-box">
+                <span class="val-label">STATUS SERVIDOR</span>
+                <span style="color: var(--primary);">ONLINE</span>
+            </div>
+            <div class="stat-box">
+                <span class="val-label">ÚLTIMO EVENTO</span>
+                <span id="lastEventTime">--:--:--</span>
+            </div>
+            <div class="stat-box">
+                <span class="val-label">DISPAROS HOJE</span>
+                <span id="triggerCount">0</span>
+            </div>
+        </div>
+
+        <div class="panel col-right">
+            <h2>CONSOLE DE SISTEMA</h2>
+            <div class="log-terminal" id="terminal">
+                <div class="log-entry"><span class="log-time">[INIT]</span> Carregando módulos...</div>
+                <div class="log-entry"><span class="log-time">[INIT]</span> Interface gráfica carregada.</div>
+            </div>
+
+            <h2>GALERIA DE ANOMALIAS</h2>
+            <div class="thumb-grid">
+                {% for ev in evidencias %}
+                    <a href="{{ ev.imagem_url }}" target="_blank"><img src="{{ ev.imagem_url }}"></a>
+                {% empty %}
+                    <div style="grid-column: 1/-1; text-align: center; color: #444; padding: 20px;">SEM DADOS</div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+
+    <audio id="remoteAudio" crossorigin="anonymous"></audio>
+
+    <script>
+        // --- CONFIGURAÇÃO ---
+        // VERIFIQUE SE O IP DO CELULAR CONTINUA SENDO ESTE:
+        const REMOTE_IP_URL = "http://10.143.222.208:8080/audio.wav"; 
+        
+        let audioCtx, analyser, dataArray, source, baseEnergy = 0;
+        let lastHeading = 0;
+        let triggerCount = 0;
+        let emDisparo = false;
+
+        // RELÓGIO
+        setInterval(() => {
+            document.getElementById('sysClock').innerText = new Date().toLocaleTimeString();
+        }, 1000);
+
+        function sysLog(msg, type="INFO") {
+            const term = document.getElementById('terminal');
+            const time = new Date().toLocaleTimeString();
+            const color = type === "ALERT" ? "color:red" : "color:var(--primary)";
+            const row = `<div class="log-entry"><span class="log-time">[${time}]</span> <span style="${color}">${msg}</span></div>`;
+            term.innerHTML += row;
+            term.scrollTop = term.scrollHeight;
+        }
+
+        async function startRemoteAudio() {
+            try {
+                const audioEl = document.getElementById('remoteAudio');
+                
+                // Configura Audio Context
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Conecta à URL do celular
+                audioEl.src = REMOTE_IP_URL;
+                
+                // Cria analisador
+                analyser = audioCtx.createAnalyser();
+                analyser.fftSize = 512;
+                
+                // IMPORTANTE: Cria fonte a partir do elemento de áudio (NÃO do microfone)
+                source = audioCtx.createMediaElementSource(audioEl);
+                
+                // Conecta: Fonte -> Analisador -> Caixas de Som
+                source.connect(analyser);
+                analyser.connect(audioCtx.destination);
+                
+                dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+                // Toca o áudio
+                await audioEl.play();
+                
+                document.getElementById('statusSys').innerText = "VIGILÂNCIA REMOTA ATIVA";
+                document.getElementById('statusSys').style.color = "#00ff41";
+                sysLog("Áudio Remoto Conectado: " + REMOTE_IP_URL, "INFO");
+                
+                requestAnimationFrame(loopSensores);
+
+                // Magnetômetro Local (do dispositivo que acessa o site)
+                if (window.DeviceOrientationEvent) {
+                    window.addEventListener('deviceorientation', handleMag);
+                    sysLog("Sensor Magnético Local ativo.", "INFO");
+                }
+
+            } catch (e) {
+                alert("Erro ao conectar áudio remoto. Verifique o IP.");
+                sysLog("ERRO: " + e, "ALERT");
+            }
+        }
+
+        function loopSensores() {
+            // Atualiza volume
+            const vol = document.getElementById('volControl').value;
+            document.getElementById('remoteAudio').volume = vol;
+
+            // 1. Visualizer (Waveform)
+            analyser.getByteTimeDomainData(dataArray); 
+            const canvas = document.getElementById('visualizer');
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+
+            ctx.fillStyle = '#000'; 
+            ctx.fillRect(0, 0, width, height);
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#00ff41';
+            ctx.beginPath();
+
+            let sliceWidth = width * 1.0 / dataArray.length;
+            let x = 0;
+            let sum = 0;
+
+            for(let i = 0; i < dataArray.length; i++) {
+                let v = dataArray[i] / 128.0;
+                let y = v * height / 2;
+                
+                if(i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+                
+                x += sliceWidth;
+                sum += Math.abs(dataArray[i] - 128); // Energia
+            }
+            ctx.lineTo(canvas.width, canvas.height/2);
+            ctx.stroke();
+
+            // 2. Energia e Gatilho
+            let avg = sum / dataArray.length;
+            document.getElementById('currEnergy').innerText = avg.toFixed(1);
+
+            if (audioCtx.currentTime < 5) {
+                baseEnergy = (baseEnergy + avg) / 2;
+            } else {
+                // Se o som do celular for muito alto (tiro, batida, grito)
+                if (avg > baseEnergy * 1.5) dispararDjango(avg, 0, 'REMOTE_AUDIO');
+            }
+            
+            requestAnimationFrame(loopSensores);
+        }
+
+        function handleMag(e) {
+            let heading = e.alpha; 
+            if(!heading) return;
+            document.getElementById('radarNeedle').style.transform = `rotate(${heading}deg)`;
+            document.getElementById('magHeading').innerText = heading.toFixed(0) + "°";
+            let delta = Math.abs(heading - lastHeading);
+            if(delta > 180) delta = 360 - delta;
+            document.getElementById('magDelta').innerText = delta.toFixed(1);
+            if(delta > 10) dispararDjango(0, delta, 'MAGNETICO_LOCAL');
+            lastHeading = heading;
+        }
+
+        function dispararDjango(audioVal, magVal, origem) {
+            if(emDisparo) return;
+            emDisparo = true;
+            sysLog(`ANOMALIA DETECTADA! [${origem}]`, "ALERT");
+            document.body.style.background = "#220000";
+            
+            triggerCount++;
+            document.getElementById('triggerCount').innerText = triggerCount;
+            document.getElementById('lastEventTime').innerText = new Date().toLocaleTimeString();
+
+            fetch('/api/gatilho_anomalia/', {
+                method: 'POST',
+                body: JSON.stringify({ audio_level: audioVal, magnetic_delta: magVal, origem_disparo: origem })
+            }).then(r => r.json()).then(d => {
+                if(d.status === 'capturado') {
+                    sysLog("Evidência salva. ID: " + d.url.split('_').pop(), "INFO");
+                    setTimeout(() => window.location.reload(), 2000);
+                }
+                setTimeout(() => { emDisparo = false; document.body.style.background = ""; }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
