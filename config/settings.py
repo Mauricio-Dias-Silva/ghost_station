@@ -42,6 +42,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'whitenoise.middleware.WhiteNoiseMiddleware
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -126,3 +127,45 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# ==============================================================================
+#  INSTRUÇÕES PYTHONJET
+#  Copie todo o código abaixo e cole no FINAL do seu arquivo settings.py.
+#  Ele vai configurar o Banco e os Estáticos automaticamente APENAS na nuvem.
+# ==============================================================================
+
+import os
+import dj_database_url
+
+# --- 1. DETECÇÃO DE AMBIENTE (NUVEM VS LOCAL) ---
+IS_CLOUD_RUN = os.environ.get('CLOUD_RUN_SERVICE_NAME') is not None
+
+if IS_CLOUD_RUN:
+    # Segurança
+    CSRF_TRUSTED_ORIGINS = ['https://*.run.app', 'https://*.pythonjet.app']
+    ALLOWED_HOSTS = ['*']
+    DEBUG = False
+
+    # Banco de Dados (PostgreSQL via Socket)
+    if os.environ.get('CLOUD_SQL_CONNECTION_NAME'):
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql',
+                'HOST': f"/cloudsql/{os.environ.get('CLOUD_SQL_CONNECTION_NAME')}",
+                'NAME': os.environ.get('DB_NAME'),
+                'USER': os.environ.get('DB_USER'),
+                'PASSWORD': os.environ.get('DB_PASSWORD'),
+                'PORT': '',
+            }
+        }
+
+    # Arquivos Estáticos (WhiteNoise)
+    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# ==============================================================================
+#  ATENÇÃO: VERIFIQUE SEU MIDDLEWARE
+#  Certifique-se de que esta linha existe na sua lista MIDDLEWARE:
+#  'whitenoise.middleware.WhiteNoiseMiddleware',
+# ==============================================================================
