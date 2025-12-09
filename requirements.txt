@@ -16,5 +16,7 @@ django-js-asset
 google-generativeai
 google-api-python-client
 google-auth
+opencv-python-headless
+
 
 
