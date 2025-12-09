@@ -19,7 +19,8 @@ python-dotenv
 
 # LIBS DE MÍDIA (OPCIONAIS MAS RECOMENDADAS)
 reportlab
-WeasyPrint
+
 requests
+
 
 
