@@ -1,83 +1,177 @@
+"""
+Ghost Station — Serviço de Câmera Refatorado.
+Lazy-load: a câmera só conecta quando alguém pedir.
+IP configurável via settings.
+"""
 import cv2
 import numpy as np
 import os
+import threading
 from django.conf import settings
 from datetime import datetime
 from .models import Evidencia
 
-class VideoCamera(object):
-    def __init__(self):
-        # Seu IP do cabo USB (Mantenha o que estava funcionando)
-        self.video = cv2.VideoCapture("http://10.93.175.172:8080/video?dummy=param.mjpg")
-        
-        self.face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-        self.peso_ruido = 0.3
 
-    def __del__(self):
-        self.video.release()
+class VideoCamera:
+    _instance = None
+    _lock = threading.Lock()
+
+    def __new__(cls):
+        """Singleton — evita múltiplas conexões com a câmera."""
+        if cls._instance is None:
+            with cls._lock:
+                if cls._instance is None:
+                    cls._instance = super().__new__(cls)
+                    cls._instance._initialized = False
+        return cls._instance
+
+    def __init__(self):
+        if self._initialized:
+            return
+        self._initialized = True
+        self.video = None
+        self.face_cascade = cv2.CascadeClassifier(
+            cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'
+        )
+        self.peso_ruido = 0.3
+        self._connected = False
+
+    def _connect(self):
+        """Conecta à câmera sob demanda (lazy-load)."""
+        if self._connected and self.video and self.video.isOpened():
+            return True
+        cam_url = getattr(settings, 'GHOST_CAMERA_URL', 'http://10.93.175.172:8080/video?dummy=param.mjpg')
+        try:
+            self.video = cv2.VideoCapture(cam_url)
+            self._connected = self.video.isOpened()
+            if self._connected:
+                print(f"📷 Câmera conectada: {cam_url}")
+            else:
+                print(f"⚠️ Falha ao conectar câmera: {cam_url}")
+        except Exception as e:
+            print(f"❌ Erro na câmera: {e}")
+            self._connected = False
+        return self._connected
+
+    @property
+    def is_connected(self):
+        return self._connected and self.video and self.video.isOpened()
+
+    def disconnect(self):
+        if self.video:
+            self.video.release()
+        self._connected = False
 
     def get_frame(self):
-        """Função para o Monitor (Ao Vivo)"""
+        """Frame para monitor ao vivo."""
+        if not self._connect():
+            return self._frame_offline()
         success, image = self.video.read()
-        if not success: return None
-        
-        # 1. GIRA A IMAGEM (Ajuste conforme necessário: CLOCKWISE ou COUNTERCLOCKWISE)
+        if not success:
+            return self._frame_offline()
         image = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
-
-        # 2. Redimensiona para caber no painel
         image = cv2.resize(image, (640, 480))
-        
-        # 3. Converte para JPG (ESSA PARTE É CRUCIAL, SE FALTAR A IMAGEM SOME)
         ret, jpeg = cv2.imencode('.jpg', image)
         return jpeg.tobytes()
 
-    def processar_anomalia_unica(self, audio_level=0, mag_level=0):
-        """Função do Gatilho (Salvar Evidência)"""
+    def _frame_offline(self):
+        """Frame placeholder quando a câmera não está conectada."""
+        img = np.zeros((480, 640, 3), dtype=np.uint8)
+        cv2.putText(img, 'SEM SINAL', (180, 220), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 65), 2)
+        cv2.putText(img, 'Conecte a camera IP', (150, 280), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (100, 100, 100), 1)
+        cv2.putText(img, f'URL: {getattr(settings, "GHOST_CAMERA_URL", "N/A")}',
+                    (80, 320), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (80, 80, 80), 1)
+        ret, jpeg = cv2.imencode('.jpg', img)
+        return jpeg.tobytes()
+
+    def processar_anomalia_unica(self, audio_level=0, mag_level=0, origem='desconhecido',
+                                  lat=None, lon=None, sessao=None):
+        """Gatilho: captura frame, detecta anomalia, salva evidência."""
+        if not self._connect():
+            return {'sucesso': False, 'motivo': 'Camera offline'}
+
         success, image = self.video.read()
-        if not success: return {'sucesso': False}
-        
-        # 1. GIRA A IMAGEM AQUI TAMBÉM (Para salvar em pé)
+        if not success:
+            return {'sucesso': False, 'motivo': 'Falha leitura frame'}
+
         image = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
-        
         image = cv2.resize(image, (640, 480))
 
-        # Ruído Digital
+        # Ruído Digital (efeito paranormal)
         h, w, c = image.shape
         ruido = np.random.randint(0, 256, (h, w, 3), dtype=np.uint8)
         frame_caotico = cv2.addWeighted(image, 1 - self.peso_ruido, ruido, self.peso_ruido, 0)
 
-        # Detecção
+        # Detecção de rostos
         gray = cv2.cvtColor(frame_caotico, cv2.COLOR_BGR2GRAY)
         faces = self.face_cascade.detectMultiScale(gray, 1.1, 4, minSize=(30, 30))
 
-        detectou = len(faces) > 0 or float(audio_level) > 1.5
-        
+        has_face = len(faces) > 0
+        has_audio = float(audio_level) > 1.5
+        has_mag = float(mag_level) > 5
+
+        detectou = has_face or has_audio
+
         if detectou:
             for (x, y, w_box, h_box) in faces:
-                cv2.rectangle(frame_caotico, (x, y), (x+w_box, y+h_box), (0, 0, 255), 2)
+                cv2.rectangle(frame_caotico, (x, y), (x + w_box, y + h_box), (0, 0, 255), 2)
+                cv2.putText(frame_caotico, 'ANOMALIA', (x, y - 10),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
 
+            # Score de coincidência
             score = 1
-            if float(audio_level) > 2.0: score += 1
-            if float(mag_level) > 5: score += 1
+            if has_audio:
+                score += 1
+            if has_mag:
+                score += 1
+            if has_face:
+                score += 1
+
+            # Determinar tipo
+            if has_face and has_audio:
+                tipo = 'multipla'
+            elif has_face:
+                tipo = 'visual'
+            elif has_audio:
+                tipo = 'sonora'
+            else:
+                tipo = 'magnetica'
+
+            # Timestamp HUD no frame
+            ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            cv2.putText(frame_caotico, f'GS // {ts} // SCORE:{score}',
+                        (10, 470), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 65), 1)
 
             # Salvar Arquivo
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"ANOMALIA_{timestamp}.jpg"
             path = os.path.join(settings.MEDIA_ROOT, 'evidencias')
-            if not os.path.exists(path): os.makedirs(path)
-            
+            if not os.path.exists(path):
+                os.makedirs(path)
+
             full_path = os.path.join(path, filename)
             cv2.imwrite(full_path, frame_caotico)
-            
+
             url_final = f"/media/evidencias/{filename}"
 
-            # Salvar Banco
-            Evidencia.objects.create(
+            # Salvar no Banco
+            evidencia = Evidencia.objects.create(
+                sessao=sessao,
                 imagem_url=url_final,
+                tipo=tipo,
                 nivel_audio_db=audio_level,
                 variacao_magnetica=mag_level,
-                score_coincidencia=score
+                score_coincidencia=score,
+                origem_disparo=origem,
+                latitude=lat,
+                longitude=lon,
             )
-            return {'sucesso': True, 'url': url_final}
-        
-        return {'sucesso': False}
+            return {
+                'sucesso': True,
+                'url': url_final,
+                'id': evidencia.id,
+                'score': score,
+                'tipo': tipo,
+            }
+
+        return {'sucesso': False, 'motivo': 'Sem validação visual'}

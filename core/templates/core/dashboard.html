@@ -1,82 +1,605 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GHOST STATION // ULTIMATE</title>
+    <title>GHOST STATION // ULTIMATE v3.0</title>
     <style>
-        /* --- ESTÉTICA GLOBAL --- */
-        :root { --primary: #00ff41; --alert: #ff003c; --bg: #050505; --panel: #0a0a0a; --grid: #1a1a1a; }
-        body { background-color: var(--bg); color: var(--primary); font-family: 'Consolas', monospace; margin: 0; padding: 0; overflow-x: hidden; background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px); background-size: 40px 40px; }
-        .crt-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)); background-size: 100% 2px, 3px 100%; pointer-events: none; z-index: 999; }
+        /* --- GLOBAL CYBERPUNK/SCADA --- */
+        :root {
+            --primary: #00ff41;
+            --alert: #ff003c;
+            --cyan: #00f0ff;
+            --bg: #050505;
+            --panel: #0a0a0a;
+            --grid: #1a1a1a;
+            --amber: #ffbf00;
+            --purple: #a855f7;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--primary);
+            font-family: 'Consolas', 'Courier New', monospace;
+            overflow-x: hidden;
+            background-image:
+                linear-gradient(var(--grid) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        .crt-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
+                linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+            z-index: 999;
+        }
 
         /* GRID LAYOUT */
-        .dashboard { display: grid; grid-template-columns: 320px 1fr 300px; grid-template-rows: 60px 1fr 100px; gap: 10px; height: 100vh; padding: 10px; box-sizing: border-box; }
-        .panel { background: rgba(10, 10, 10, 0.9); border: 1px solid #333; padding: 10px; position: relative; box-shadow: 0 0 10px rgba(0, 255, 65, 0.05); display: flex; flex-direction: column; }
-        .panel::before { content: ''; position: absolute; top: -1px; left: -1px; width: 10px; height: 10px; border-top: 2px solid var(--primary); border-left: 2px solid var(--primary); }
-        .panel::after { content: ''; position: absolute; bottom: -1px; right: -1px; width: 10px; height: 10px; border-bottom: 2px solid var(--primary); border-right: 2px solid var(--primary); }
+        .dashboard {
+            display: grid;
+            grid-template-columns: 300px 1fr 300px;
+            grid-template-rows: 50px 1fr 90px;
+            gap: 8px;
+            height: 100vh;
+            padding: 8px;
+        }
 
-        h2 { margin: 0 0 10px 0; font-size: 12px; letter-spacing: 2px; border-bottom: 1px solid #333; padding-bottom: 5px; color: #888; }
-        h3 { margin: 15px 0 5px 0; font-size: 10px; color: var(--primary); border-left: 3px solid var(--primary); padding-left: 5px; }
+        .panel {
+            background: rgba(10, 10, 10, 0.92);
+            border: 1px solid #333;
+            padding: 10px;
+            position: relative;
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.05);
+            display: flex;
+            flex-direction: column;
+            border-radius: 2px;
+        }
+
+        .panel::before {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: -1px;
+            width: 10px;
+            height: 10px;
+            border-top: 2px solid var(--primary);
+            border-left: 2px solid var(--primary);
+        }
+
+        .panel::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            right: -1px;
+            width: 10px;
+            height: 10px;
+            border-bottom: 2px solid var(--primary);
+            border-right: 2px solid var(--primary);
+        }
+
+        h2 {
+            font-size: 11px;
+            letter-spacing: 2px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 5px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        h3 {
+            font-size: 10px;
+            color: var(--primary);
+            border-left: 3px solid var(--primary);
+            padding-left: 5px;
+            margin: 10px 0 5px;
+        }
 
         /* HEADER */
-        .header { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary); }
-        .logo { font-size: 24px; font-weight: bold; text-shadow: 0 0 5px var(--primary); }
+        .header {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--primary);
+            padding: 0 10px;
+        }
 
-        /* COLUNA ESQUERDA */
-        .col-left { grid-column: 1; grid-row: 2 / -1; gap: 5px; overflow-y: auto; }
-        canvas#visualizer { width: 100%; height: 60px; background: #000; border: 1px solid #222; }
-        .radar-wrapper { display: flex; align-items: center; justify-content: space-between; border: 1px solid #222; padding: 5px; background: #000; }
-        .radar-box { width: 80px; height: 80px; border-radius: 50%; border: 1px dashed #333; position: relative; }
-        .radar-line { position: absolute; top: 50%; left: 50%; width: 50%; height: 2px; background: var(--primary); transform-origin: 0% 0%; }
-        
-        /* CONTROLES */
-        label { font-size: 9px; color: #aaa; display: flex; justify-content: space-between; }
-        input[type=range] { width: 100%; accent-color: var(--primary); margin: 2px 0; cursor: pointer; height: 5px; }
-        .btn-main { background: transparent; border: 1px solid var(--primary); color: var(--primary); padding: 8px; width: 100%; cursor: pointer; margin-top: 5px; font-family: inherit; font-size: 11px; transition: 0.2s; }
-        .btn-main:hover { background: var(--primary); color: #000; box-shadow: 0 0 10px var(--primary); }
-        .btn-danger { border-color: var(--alert); color: var(--alert); }
-        .btn-danger:hover { background: var(--alert); color: white; }
+        .logo {
+            font-size: 22px;
+            font-weight: bold;
+            text-shadow: 0 0 5px var(--primary);
+        }
 
-        /* VÍDEO */
-        .col-center { grid-column: 2; grid-row: 2; }
-        .video-container { flex-grow: 1; background: #000; border: 2px solid #333; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; height: 100%; }
-        .video-feed { width: 100%; height: 100%; object-fit: contain; }
-        .video-hud { position: absolute; top: 10px; left: 10px; right: 10px; bottom: 10px; border: 1px solid rgba(0, 255, 65, 0.3); pointer-events: none; }
-        .rec-dot { position: absolute; top: 10px; right: 10px; width: 10px; height: 10px; background: red; border-radius: 50%; animation: blink 1s infinite; }
-        .crosshair { position: absolute; top: 50%; left: 50%; width: 40px; height: 40px; border: 1px solid rgba(0, 255, 65, 0.5); transform: translate(-50%, -50%); }
-        .crosshair::before { content: ''; position: absolute; background: var(--primary); top: 19px; left: 0; width: 40px; height: 1px; }
-        .crosshair::after { content: ''; position: absolute; background: var(--primary); top: 0; left: 19px; width: 1px; height: 40px; }
+        .logo span {
+            font-size: 11px;
+            opacity: 0.6;
+        }
 
-        /* DIREITA */
-        .col-right { grid-column: 3; grid-row: 2 / -1; gap: 10px; }
-        .log-terminal { flex-grow: 1; font-size: 10px; color: #aaa; overflow-y: scroll; border-top: 1px solid #333; font-family: monospace; height: 150px; }
-        .log-entry { margin-bottom: 2px; border-bottom: 1px solid #111; }
-        .thumb-grid { flex-grow: 1; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
-        .thumb-grid img { width: 100%; opacity: 0.7; border: 1px solid #333; }
+        .header-right {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            font-size: 11px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 4px;
+        }
+
+        .status-dot.online {
+            background: var(--primary);
+            box-shadow: 0 0 6px var(--primary);
+            animation: blink 2s infinite;
+        }
+
+        .status-dot.offline {
+            background: var(--alert);
+        }
+
+        /* LEFT COLUMN */
+        .col-left {
+            grid-column: 1;
+            grid-row: 2 / -1;
+            gap: 5px;
+            overflow-y: auto;
+        }
+
+        canvas#visualizer {
+            width: 100%;
+            height: 50px;
+            background: #000;
+            border: 1px solid #222;
+            border-radius: 2px;
+        }
+
+        .radar-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid #222;
+            padding: 5px;
+            background: #000;
+            border-radius: 2px;
+        }
+
+        .radar-box {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: 1px dashed #333;
+            position: relative;
+        }
+
+        .radar-line {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 50%;
+            height: 2px;
+            background: var(--primary);
+            transform-origin: 0% 0%;
+            box-shadow: 0 0 4px var(--primary);
+        }
+
+        label {
+            font-size: 9px;
+            color: #aaa;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        input[type=range] {
+            width: 100%;
+            accent-color: var(--primary);
+            margin: 2px 0;
+            cursor: pointer;
+            height: 4px;
+        }
+
+        .btn-main {
+            background: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            padding: 7px;
+            width: 100%;
+            cursor: pointer;
+            margin-top: 5px;
+            font-family: inherit;
+            font-size: 10px;
+            transition: 0.2s;
+            border-radius: 2px;
+        }
+
+        .btn-main:hover {
+            background: var(--primary);
+            color: #000;
+            box-shadow: 0 0 10px var(--primary);
+        }
+
+        .btn-danger {
+            border-color: var(--alert);
+            color: var(--alert);
+        }
+
+        .btn-danger:hover {
+            background: var(--alert);
+            color: white;
+        }
+
+        .btn-amber {
+            border-color: var(--amber);
+            color: var(--amber);
+        }
+
+        .btn-amber:hover {
+            background: var(--amber);
+            color: #000;
+        }
+
+        .btn-cyan {
+            border-color: var(--cyan);
+            color: var(--cyan);
+        }
+
+        .btn-cyan:hover {
+            background: var(--cyan);
+            color: #000;
+        }
+
+        /* SESSION BAR */
+        .session-bar {
+            background: rgba(0, 255, 65, 0.05);
+            border: 1px solid var(--primary);
+            padding: 6px 8px;
+            border-radius: 2px;
+            margin-bottom: 8px;
+            font-size: 10px;
+        }
+
+        .session-bar.inactive {
+            border-color: #555;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .session-timer {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--primary);
+            text-shadow: 0 0 5px var(--primary);
+        }
+
+        /* CENTER (VIDEO) */
+        .col-center {
+            grid-column: 2;
+            grid-row: 2;
+        }
+
+        .video-container {
+            flex-grow: 1;
+            background: #000;
+            border: 2px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+            height: 100%;
+            border-radius: 2px;
+        }
+
+        .video-feed {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .video-hud {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            right: 8px;
+            bottom: 8px;
+            border: 1px solid rgba(0, 255, 65, 0.3);
+            pointer-events: none;
+        }
+
+        .rec-dot {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 8px;
+            height: 8px;
+            background: red;
+            border-radius: 50%;
+            box-shadow: 0 0 5px red;
+            animation: blink 1s infinite;
+        }
+
+        .crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 30px;
+            height: 30px;
+            border: 1px solid rgba(0, 255, 65, 0.4);
+            transform: translate(-50%, -50%);
+        }
+
+        .crosshair::before {
+            content: '';
+            position: absolute;
+            background: var(--primary);
+            opacity: 0.4;
+            top: 14px;
+            left: 0;
+            width: 30px;
+            height: 1px;
+        }
+
+        .crosshair::after {
+            content: '';
+            position: absolute;
+            background: var(--primary);
+            opacity: 0.4;
+            top: 0;
+            left: 14px;
+            width: 1px;
+            height: 30px;
+        }
+
+        .hud-coords {
+            position: absolute;
+            bottom: 5px;
+            left: 5px;
+            font-size: 9px;
+            opacity: 0.6;
+        }
+
+        .hud-alert {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 20px;
+            color: var(--alert);
+            text-shadow: 0 0 15px var(--alert);
+            display: none;
+            animation: flashAlert 0.5s ease;
+        }
+
+        /* RIGHT COLUMN */
+        .col-right {
+            grid-column: 3;
+            grid-row: 2 / -1;
+            gap: 6px;
+            overflow-y: auto;
+        }
+
+        .log-terminal {
+            flex-grow: 1;
+            font-size: 9px;
+            color: #aaa;
+            overflow-y: scroll;
+            border-top: 1px solid #333;
+            font-family: monospace;
+            max-height: 150px;
+        }
+
+        .log-entry {
+            margin-bottom: 1px;
+            border-bottom: 1px solid #111;
+            padding: 1px 0;
+        }
+
+        .log-entry.alert {
+            color: var(--alert);
+        }
+
+        .log-entry.ia {
+            color: var(--purple);
+        }
+
+        .decoder-box {
+            border: 1px solid var(--primary);
+            text-align: center;
+            padding: 8px;
+            border-radius: 2px;
+            margin-top: 5px;
+        }
+
+        #wordDisplay {
+            font-size: 22px;
+            font-weight: bold;
+            color: #fff;
+            padding: 5px;
+            text-shadow: 0 0 10px var(--primary);
+            transition: all 0.3s;
+        }
+
+        .thumb-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2px;
+            margin-top: 5px;
+        }
+
+        .thumb-grid a {
+            position: relative;
+            display: block;
+        }
+
+        .thumb-grid img {
+            width: 100%;
+            opacity: 0.7;
+            border: 1px solid #333;
+            transition: 0.2s;
+            border-radius: 2px;
+        }
+
+        .thumb-grid img:hover {
+            opacity: 1;
+            border-color: var(--primary);
+        }
+
+        .thumb-badge {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: var(--alert);
+            color: white;
+            font-size: 8px;
+            padding: 1px 4px;
+            border-radius: 2px;
+        }
 
         /* FOOTER */
-        .footer { grid-column: 2; grid-row: 3; display: flex; gap: 10px; padding-top: 5px; }
-        .stat-box { flex: 1; border: 1px solid #333; padding: 5px; text-align: center; display: flex; flex-direction: column; justify-content: center; }
-        .val-big { font-size: 20px; font-weight: bold; }
-        .val-label { font-size: 10px; color: #666; }
+        .footer {
+            grid-column: 2;
+            grid-row: 3;
+            display: flex;
+            gap: 6px;
+        }
 
-        @keyframes blink { 50% {opacity: 0;} }
-        @media (max-width: 900px) { .dashboard { grid-template-columns: 1fr; grid-template-rows: auto; height: auto; display: flex; flex-direction: column; } }
+        .stat-box {
+            flex: 1;
+            border: 1px solid #333;
+            padding: 5px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            border-radius: 2px;
+        }
+
+        .val-big {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .val-label {
+            font-size: 9px;
+            color: #555;
+        }
+
+        /* IA PANEL */
+        .ia-panel {
+            border: 1px solid var(--purple);
+            background: rgba(168, 85, 247, 0.05);
+            padding: 6px;
+            border-radius: 2px;
+            margin-top: 5px;
+        }
+
+        .ia-panel h3 {
+            border-color: var(--purple);
+            color: var(--purple);
+        }
+
+        #iaResult {
+            font-size: 9px;
+            color: #aaa;
+            max-height: 60px;
+            overflow-y: auto;
+        }
+
+        .ia-score {
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--purple);
+            text-shadow: 0 0 5px var(--purple);
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes flashAlert {
+
+            0%,
+            100% {
+                opacity: 0;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+
+        @keyframes pulseGlow {
+
+            0%,
+            100% {
+                box-shadow: 0 0 5px var(--primary);
+            }
+
+            50% {
+                box-shadow: 0 0 15px var(--primary);
+            }
+        }
+
+        @media (max-width: 900px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto;
+                height: auto;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .video-container {
+                min-height: 300px;
+            }
+        }
     </style>
 </head>
-<body>
 
+<body>
     <div class="crt-overlay"></div>
 
     <div class="dashboard">
-        
+
+        <!-- HEADER -->
         <div class="panel header">
-            <div class="logo">GHOST_STATION <span style="font-size: 12px; opacity: 0.7;">// ULTIMATE</span></div>
-            <div class="clock" id="sysClock">00:00:00</div>
+            <div class="logo">GHOST_STATION <span>// v3.0 ULTIMATE</span></div>
+            <div class="header-right">
+                <div><span class="status-dot" id="camDot"></span>CAM: <span id="camStatus">---</span></div>
+                <div><span class="status-dot" id="iaDot"></span>IA: <span id="iaStatus">READY</span></div>
+                <div id="sysClock" style="color: var(--cyan);">00:00:00</div>
+            </div>
         </div>
 
+        <!-- LEFT COLUMN -->
         <div class="panel col-left">
+            <!-- SESSION CONTROL -->
+            <div class="session-bar inactive" id="sessionBar">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span id="sessionLabel">Sem Sessão Ativa</span>
+                    <span class="session-timer" id="sessionTimer">00:00</span>
+                </div>
+                <div style="font-size:9px; color:#555; margin-top:3px;" id="sessionInfo"></div>
+            </div>
+            <button class="btn-main btn-cyan" id="btnSession" onclick="toggleSession()">▷ INICIAR SESSÃO</button>
+
             <h2>MÓDULO DE ENTRADA</h2>
             <canvas id="visualizer"></canvas>
             <div class="control-group">
@@ -87,10 +610,13 @@
 
             <h3>CAMPO MAGNÉTICO</h3>
             <div class="radar-wrapper">
-                <div class="radar-box"><div class="radar-line" id="radarNeedle"></div></div>
+                <div class="radar-box">
+                    <div class="radar-line" id="radarNeedle"></div>
+                </div>
                 <div class="mag-data">
                     <div id="magHeading">0°</div>
-                    <div style="font-size: 10px; color: #555;">DELTA: <span id="magDelta" style="color: var(--primary)">0</span></div>
+                    <div style="font-size:10px;color:#555;">DELTA: <span id="magDelta"
+                            style="color:var(--primary)">0</span></div>
                 </div>
             </div>
 
@@ -104,53 +630,79 @@
                 <input type="range" id="sbEcho" min="0" max="0.8" step="0.1" value="0.3" oninput="updateUI()">
             </div>
             <button class="btn-main btn-danger" id="btnSB" onclick="toggleSpiritBox()">⚡ ATIVAR VARREDURA</button>
+
+            <div style="margin-top:8px;">
+                <a href="/scanner/" class="btn-main btn-amber"
+                    style="display:block; text-align:center; text-decoration:none;">📱 SPECTRAL SCANNER</a>
+            </div>
         </div>
 
+        <!-- CENTER (VIDEO) -->
         <div class="panel col-center">
             <h2>VISÃO ESPECTRAL [IP_CAM]</h2>
             <div class="video-container">
-                <img src="{% url 'video_feed' %}" class="video-feed">
+                <img src="{% url 'video_feed' %}" class="video-feed" id="videoFeed">
                 <div class="video-hud">
                     <div class="rec-dot"></div>
                     <div class="crosshair"></div>
-                    <div style="position: absolute; bottom: 5px; left: 5px; font-size: 10px;">RES: 640x480 | FPS: 30</div>
+                    <div class="hud-coords">RES: 640x480 | <span id="fpsTicker">FPS: --</span></div>
+                    <div class="hud-alert" id="hudAlert">⚠ ANOMALIA DETECTADA ⚠</div>
                 </div>
             </div>
         </div>
 
+        <!-- FOOTER STATS -->
         <div class="footer">
             <div class="stat-box">
-                <span class="val-label">STATUS</span>
-                <span style="color: var(--primary);" id="statusSys">ONLINE</span>
-            </div>
-            <div class="stat-box">
-                <span class="val-label">ENERGIA AMBIENTE</span>
+                <span class="val-label">ENERGIA</span>
                 <span id="currEnergy" class="val-big">0.0</span>
             </div>
             <div class="stat-box">
                 <span class="val-label">DISPAROS</span>
                 <span id="triggerCount" class="val-big">0</span>
             </div>
+            <div class="stat-box">
+                <span class="val-label">SCORE MAX</span>
+                <span id="scoreMax" class="val-big" style="color:var(--alert)">{{ score_max }}</span>
+            </div>
+            <div class="stat-box">
+                <span class="val-label">TOTAL</span>
+                <span id="totalEv" class="val-big" style="color:var(--cyan)">{{ total_evidencias }}</span>
+            </div>
         </div>
 
+        <!-- RIGHT COLUMN -->
         <div class="panel col-right">
             <h2>LOG DO SISTEMA</h2>
             <div class="log-terminal" id="terminal">
-                <div class="log-entry">> Sistema iniciado...</div>
-            </div>
-            
-            <div class="panel" style="margin-top: 5px; border-color: var(--primary); text-align: center; min-height: 80px;">
-                <h3 style="margin:0; border:none;">DECODIFICADOR</h3>
-                <div id="wordDisplay" style="font-size: 24px; font-weight: bold; color: #fff; padding: 10px; text-shadow: 0 0 10px var(--primary);">...</div>
-                <div style="font-size: 9px; color: #555;">VARIAÇÃO DE ENTROPIA</div>
+                <div class="log-entry">> Ghost Station v3.0 iniciado...</div>
+                <div class="log-entry">> Módulo IA: Gemini Vision Ready</div>
             </div>
 
-            <h2>EVIDÊNCIAS</h2>
-            <div class="thumb-grid">
+            <div class="decoder-box">
+                <h3 style="margin:0;border:none;">DECODIFICADOR OVILUS</h3>
+                <div id="wordDisplay">...</div>
+                <div style="font-size:8px;color:#444;">VARIAÇÃO DE ENTROPIA</div>
+            </div>
+
+            <!-- IA PANEL -->
+            <div class="ia-panel">
+                <h3 style="margin:0;">🧠 ANÁLISE IA (ÚLTIMA)</h3>
+                <div id="iaResult" style="margin-top:4px;">Aguardando evidência...</div>
+                <div style="margin-top:3px;font-size:9px;">
+                    Nota Paranormal: <span class="ia-score" id="iaScore">-</span>/10
+                </div>
+            </div>
+
+            <h2 style="margin-top:8px;">EVIDÊNCIAS (ÚLTIMAS)</h2>
+            <div class="thumb-grid" id="thumbGrid">
                 {% for ev in evidencias %}
-                    <a href="{{ ev.imagem_url }}" target="_blank"><img src="{{ ev.imagem_url }}"></a>
+                <a href="{{ ev.imagem_url }}" target="_blank">
+                    <img src="{{ ev.imagem_url }}" alt="EVD-{{ ev.id }}">
+                    <span class="thumb-badge">S:{{ ev.score_coincidencia }}</span>
+                </a>
                 {% empty %}
-                    <div style="padding:10px; text-align:center; font-size:10px;">Aguardando dados...</div>
+                <div style="padding:10px;text-align:center;font-size:10px;grid-column:1/-1;">Aguardando dados...</div>
                 {% endfor %}
             </div>
         </div>
@@ -159,71 +711,135 @@
     <audio id="remoteAudio" crossorigin="anonymous"></audio>
 
     <script>
-        // --- CONFIGURAÇÃO IP ---
-        const REMOTE_IP_URL = "http://10.93.175.172:8080/audio.wav"; 
+        // === CONFIGURAÇÃO ===
+        const REMOTE_AUDIO_URL = "{{ audio_url|default:'http://10.93.175.172:8080/audio.wav' }}";
 
-        // --- BANCO DE PALAVRAS (OVILUS) ---
+        // === WORD BANK (OVILUS) ===
         const WORD_BANK = [
-            "OLÁ", "AJUDA", "AQUI", "MEDO", "LUZ", "ESCURO", "MORTE", "VIDA", "TEMPO", 
+            "OLÁ", "AJUDA", "AQUI", "MEDO", "LUZ", "ESCURO", "MORTE", "VIDA", "TEMPO",
             "AGORA", "VOCÊ", "NÓS", "ELES", "SINAL", "FRIO", "QUENTE", "PARE", "VAI",
             "CASA", "CAMINHO", "PORTA", "ABRIR", "FECHAR", "VER", "OUVIR", "FALAR",
-            "NOME", "MAURICIO", "DOR", "PAZ", "CORRER", "ESPERAR", "SIM", "NÃO",
-            "ÁGUA", "FOGO", "TERRA", "AR", "SUBIR", "DESCER", "PERTO", "LONGE"
+            "NOME", "DOR", "PAZ", "CORRER", "ESPERAR", "SIM", "NÃO", "PERIGO",
+            "ÁGUA", "FOGO", "TERRA", "AR", "SUBIR", "DESCER", "PERTO", "LONGE",
+            "CRIANÇA", "ANJO", "DEMÔNIO", "ESPÍRITO", "ENERGIA", "PRESENÇA", "SOMBRA"
         ];
 
+        // === STATE ===
         let audioCtx, analyser, dataArray, source;
         let sbOscillator, sbLFO, sbGain, sbFilter, feedbackNode, delayNode;
         let isSpiritBoxOn = false;
-        let baseEnergy = 0;
-        let emDisparo = false;
-        let triggerCount = 0;
-        let lastHeading = 0;
-        let lastWordTime = 0;
+        let baseEnergy = 0, emDisparo = false, triggerCount = 0;
+        let lastHeading = 0, lastWordTime = 0;
+        let sessionActive = false, sessionStart = null;
 
+        // Clock
         setInterval(() => document.getElementById('sysClock').innerText = new Date().toLocaleTimeString(), 1000);
 
-        function sysLog(msg, type="INFO") {
+        // Session timer
+        setInterval(() => {
+            if (sessionActive && sessionStart) {
+                const diff = Math.floor((Date.now() - sessionStart) / 1000);
+                const m = Math.floor(diff / 60).toString().padStart(2, '0');
+                const s = (diff % 60).toString().padStart(2, '0');
+                document.getElementById('sessionTimer').innerText = m + ':' + s;
+            }
+        }, 1000);
+
+        // === POLLING — real-time updates without page reload ===
+        setInterval(async () => {
+            try {
+                const r = await fetch('/api/evidencias/');
+                const d = await r.json();
+                if (d.evidencias && d.evidencias.length > 0) {
+                    const grid = document.getElementById('thumbGrid');
+                    grid.innerHTML = d.evidencias.map(e =>
+                        `<a href="${e.url}" target="_blank">
+                            <img src="${e.url}" alt="EVD-${e.id}">
+                            <span class="thumb-badge">S:${e.score}</span>
+                        </a>`
+                    ).join('');
+                    document.getElementById('totalEv').innerText = d.evidencias.length;
+                }
+            } catch (e) { }
+        }, 5000);
+
+        // Status polling
+        setInterval(async () => {
+            try {
+                const r = await fetch('/api/status/');
+                const d = await r.json();
+                const camDot = document.getElementById('camDot');
+                const camStatus = document.getElementById('camStatus');
+                if (d.camera) {
+                    camDot.className = 'status-dot online';
+                    camStatus.innerText = 'ONLINE';
+                } else {
+                    camDot.className = 'status-dot offline';
+                    camStatus.innerText = 'OFFLINE';
+                }
+                if (d.sessao) {
+                    document.getElementById('scoreMax').innerText = d.sessao.score_max;
+                }
+            } catch (e) { }
+        }, 3000);
+
+        // === SYSTEM LOG ===
+        function sysLog(msg, type = "INFO") {
             const t = document.getElementById('terminal');
-            const color = type === "ALERT" ? "red" : "#00ff41";
-            t.innerHTML += `<div class="log-entry"><span style="color:${color}">[${new Date().toLocaleTimeString()}]</span> ${msg}</div>`;
+            const cls = type === "ALERT" ? "alert" : type === "IA" ? "ia" : "";
+            const color = type === "ALERT" ? "var(--alert)" : type === "IA" ? "var(--purple)" : "var(--primary)";
+            t.innerHTML += `<div class="log-entry ${cls}"><span style="color:${color}">[${new Date().toLocaleTimeString()}]</span> ${msg}</div>`;
             t.scrollTop = t.scrollHeight;
         }
 
         function updateUI() {
-            document.getElementById('volDisp').innerText = Math.round(document.getElementById('volControl').value*100) + "%";
+            document.getElementById('volDisp').innerText = Math.round(document.getElementById('volControl').value * 100) + "%";
             document.getElementById('scanDisp').innerText = document.getElementById('sbRate').value + "ms";
-            document.getElementById('echoDisp').innerText = Math.round(document.getElementById('sbEcho').value*100) + "%";
-            
-            if(document.getElementById('remoteAudio')) 
-                document.getElementById('remoteAudio').volume = document.getElementById('volControl').value;
-
-            if(isSpiritBoxOn && sbLFO && feedbackNode) {
+            document.getElementById('echoDisp').innerText = Math.round(document.getElementById('sbEcho').value * 100) + "%";
+            if (document.getElementById('remoteAudio')) document.getElementById('remoteAudio').volume = document.getElementById('volControl').value;
+            if (isSpiritBoxOn && sbLFO && feedbackNode) {
                 sbLFO.frequency.value = 1000 / document.getElementById('sbRate').value;
                 feedbackNode.gain.value = document.getElementById('sbEcho').value;
             }
         }
 
+        // === SESSION MANAGEMENT ===
+        async function toggleSession() {
+            const btn = document.getElementById('btnSession');
+            const bar = document.getElementById('sessionBar');
+            if (!sessionActive) {
+                const resp = await fetch('/api/iniciar_sessao/', { method: 'POST', body: JSON.stringify({ titulo: `Investigação ${new Date().toLocaleString()}` }) });
+                const data = await resp.json();
+                sessionActive = true; sessionStart = Date.now();
+                bar.classList.remove('inactive');
+                document.getElementById('sessionLabel').innerText = data.titulo;
+                btn.innerText = '■ ENCERRAR SESSÃO'; btn.className = 'btn-main btn-danger';
+                sysLog(`SESSÃO INICIADA: ${data.titulo}`, "ALERT");
+            } else {
+                const resp = await fetch('/api/encerrar_sessao/', { method: 'POST' });
+                const data = await resp.json();
+                sessionActive = false; sessionStart = null;
+                bar.classList.add('inactive');
+                document.getElementById('sessionLabel').innerText = 'Sessão Encerrada';
+                document.getElementById('sessionInfo').innerText = `Anomalias: ${data.total_anomalias} | Score Max: ${data.score_maximo}`;
+                btn.innerText = '▷ INICIAR SESSÃO'; btn.className = 'btn-main btn-cyan';
+                sysLog(`SESSÃO ENCERRADA | Anomalias: ${data.total_anomalias}`, "INFO");
+            }
+        }
+
+        // === AUDIO ===
         async function startRemoteAudio() {
             try {
-                if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 const audioEl = document.getElementById('remoteAudio');
-                audioEl.src = REMOTE_IP_URL;
-                
-                analyser = audioCtx.createAnalyser();
-                analyser.fftSize = 512;
-                
+                audioEl.src = REMOTE_AUDIO_URL;
+                analyser = audioCtx.createAnalyser(); analyser.fftSize = 512;
                 source = audioCtx.createMediaElementSource(audioEl);
-                source.connect(analyser);
-                analyser.connect(audioCtx.destination);
-                
+                source.connect(analyser); analyser.connect(audioCtx.destination);
                 dataArray = new Uint8Array(analyser.frequencyBinCount);
-                
                 await audioEl.play();
                 sysLog("Áudio Remoto Conectado.", "INFO");
-                document.getElementById('statusSys').innerText = "VIGILÂNCIA ATIVA";
-                
-                requestAnimationFrame(loopVisualizer); // INICIA O LOOP AQUI
-
+                requestAnimationFrame(loopVisualizer);
                 if (window.DeviceOrientationEvent) {
                     window.addEventListener('deviceorientation', handleMag);
                     sysLog("Magnetômetro Ativo.", "INFO");
@@ -235,62 +851,42 @@
             analyser.getByteTimeDomainData(dataArray);
             const canvas = document.getElementById('visualizer');
             const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#000'; ctx.fillRect(0,0,canvas.width, canvas.height);
-            ctx.lineWidth = 2; ctx.strokeStyle = '#00ff41'; ctx.beginPath();
-            
-            let sliceWidth = canvas.width * 1.0 / dataArray.length;
-            let x = 0, sum = 0;
-            for(let i=0; i<dataArray.length; i++) {
-                let v = dataArray[i] / 128.0;
-                let y = v * canvas.height/2;
-                if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-                x+=sliceWidth;
-                sum += Math.abs(dataArray[i]-128);
+            ctx.fillStyle = '#000'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.lineWidth = 1.5; ctx.strokeStyle = '#00ff41'; ctx.beginPath();
+            let sliceWidth = canvas.width / dataArray.length, x = 0, sum = 0;
+            for (let i = 0; i < dataArray.length; i++) {
+                let v = dataArray[i] / 128.0, y = v * canvas.height / 2;
+                if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+                x += sliceWidth; sum += Math.abs(dataArray[i] - 128);
             }
             ctx.stroke();
-            
-            let avg = sum/dataArray.length;
+            let avg = sum / dataArray.length;
             document.getElementById('currEnergy').innerText = avg.toFixed(1);
-            
-            // 1. CHECA GATILHO DE ALERTA
-            if (audioCtx.currentTime < 5) baseEnergy = (baseEnergy + avg)/2;
+            if (audioCtx.currentTime < 5) baseEnergy = (baseEnergy + avg) / 2;
             else if (avg > baseEnergy * 2.0) dispararDjango(avg, 0, 'REMOTE_AUDIO');
-
-            // 2. CHECA SE DEVE MOSTRAR PALAVRA (OVILUS)
-            // Adicionei a chamada da função aqui dentro do loop
             tryManifestWord(avg);
-            
             requestAnimationFrame(loopVisualizer);
         }
 
         function tryManifestWord(energyLevel) {
             const now = Date.now();
-            if (now - lastWordTime < 3000) return; // Delay de 3s
-
-            // Só mostra palavra se houver pico de energia significativo
-            if (energyLevel > 20) { 
+            if (now - lastWordTime < 3000) return;
+            if (energyLevel > 20) {
                 const seed = Math.floor(energyLevel * 100) + Math.floor(Math.random() * 100);
-                const index = seed % WORD_BANK.length;
-                const chosenWord = WORD_BANK[index];
-                
+                const chosen = WORD_BANK[seed % WORD_BANK.length];
                 const display = document.getElementById('wordDisplay');
-                display.innerText = chosenWord;
-                display.style.color = "#fff";
-                display.style.textShadow = "0 0 20px red";
-                
-                sysLog(`DECODIFICADO: [${chosenWord}]`, "ALERT");
-                
-                setTimeout(() => {
-                    display.style.color = "var(--primary)";
-                    display.style.textShadow = "none";
-                }, 2000);
+                display.innerText = chosen;
+                display.style.color = "#fff"; display.style.textShadow = "0 0 20px red";
+                sysLog(`DECODIFICADO: [${chosen}]`, "ALERT");
+                setTimeout(() => { display.style.color = "var(--primary)"; display.style.textShadow = "none"; }, 2000);
                 lastWordTime = now;
             }
         }
 
+        // === SPIRIT BOX ===
         function toggleSpiritBox() {
-            if(!audioCtx) { alert("Conecte o áudio primeiro!"); return; }
-            if(isSpiritBoxOn) {
+            if (!audioCtx) { alert("Conecte o áudio primeiro!"); return; }
+            if (isSpiritBoxOn) {
                 sbOscillator.stop(); sbLFO.stop(); isSpiritBoxOn = false;
                 document.getElementById('btnSB').innerText = "⚡ ATIVAR VARREDURA";
                 document.getElementById('btnSB').style.background = "transparent";
@@ -300,7 +896,6 @@
                 const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
                 const data = buffer.getChannelData(0);
                 for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-                
                 const noise = audioCtx.createBufferSource(); noise.buffer = buffer; noise.loop = true;
                 sbFilter = audioCtx.createBiquadFilter(); sbFilter.type = 'bandpass'; sbFilter.Q.value = 1;
                 sbLFO = audioCtx.createOscillator(); sbLFO.type = 'sawtooth';
@@ -311,47 +906,82 @@
                 feedbackNode = audioCtx.createGain(); feedbackNode.gain.value = document.getElementById('sbEcho').value;
                 noise.connect(sbFilter); sbFilter.connect(delayNode); delayNode.connect(feedbackNode);
                 feedbackNode.connect(delayNode); delayNode.connect(audioCtx.destination); sbFilter.connect(audioCtx.destination);
-                noise.start(); sbLFO.start(); sbOscillator = noise;
-                isSpiritBoxOn = true;
+                noise.start(); sbLFO.start(); sbOscillator = noise; isSpiritBoxOn = true;
                 document.getElementById('btnSB').innerText = "PARAR VARREDURA";
-                document.getElementById('btnSB').style.background = "red";
-                document.getElementById('btnSB').style.color = "white";
+                document.getElementById('btnSB').style.background = "red"; document.getElementById('btnSB').style.color = "white";
                 sysLog("Spirit Box INICIADA.", "ALERT");
             }
         }
 
+        // === MAGNETOMETER ===
         function handleMag(e) {
-            let heading = e.alpha; if(!heading) return;
+            let heading = e.alpha; if (!heading) return;
             document.getElementById('radarNeedle').style.transform = `rotate(${heading}deg)`;
             document.getElementById('magHeading').innerText = heading.toFixed(0) + "°";
             let delta = Math.abs(heading - lastHeading);
-            if(delta > 180) delta = 360 - delta;
+            if (delta > 180) delta = 360 - delta;
             document.getElementById('magDelta').innerText = delta.toFixed(1);
-            if(delta > 15) {
+            if (delta > 15) {
                 dispararDjango(0, delta, 'MAGNETICO');
-                tryManifestWord(50); // Magnetismo alto também gera palavra!
+                tryManifestWord(50);
             }
             lastHeading = heading;
         }
 
-        function dispararDjango(val, mag, origem) {
-            if(emDisparo) return;
-            emDisparo = true;
-            triggerCount++;
+        // === TRIGGER (NO RELOAD!) ===
+        async function dispararDjango(val, mag, origem) {
+            if (emDisparo) return;
+            emDisparo = true; triggerCount++;
             document.getElementById('triggerCount').innerText = triggerCount;
-            sysLog(`GATILHO: ${origem}`, "ALERT");
+            sysLog(`⚠ GATILHO: ${origem} | Audio:${val.toFixed ? val.toFixed(1) : val} Mag:${mag}`, "ALERT");
+
+            // Flash visual
             document.body.style.background = "#220000";
-            fetch('/api/gatilho_anomalia/', {
-                method: 'POST',
-                body: JSON.stringify({ audio_level: val, magnetic_delta: mag, origem_disparo: origem })
-            }).then(r=>r.json()).then(d=>{
-                if(d.status==='capturado') {
-                    sysLog("Evidência SALVA. ID: " + d.url.split('_').pop(), "INFO");
-                    setTimeout(()=>window.location.reload(), 2500);
+            const alert = document.getElementById('hudAlert');
+            alert.style.display = 'block';
+            setTimeout(() => { alert.style.display = 'none'; }, 1500);
+
+            try {
+                const r = await fetch('/api/gatilho_anomalia/', {
+                    method: 'POST',
+                    body: JSON.stringify({ audio_level: val, magnetic_delta: mag, origem_disparo: origem })
+                });
+                const d = await r.json();
+                if (d.status === 'capturado') {
+                    sysLog(`✓ Evidência SALVA (ID:${d.id} Score:${d.score} Tipo:${d.tipo})`, "INFO");
+                    // Update IA status
+                    document.getElementById('iaDot').className = 'status-dot online';
+                    document.getElementById('iaStatus').innerText = 'ANALISANDO...';
+                    // Wait for IA result
+                    setTimeout(async () => {
+                        try {
+                            const er = await fetch('/api/evidencias/');
+                            const ed = await er.json();
+                            if (ed.evidencias && ed.evidencias.length > 0) {
+                                const latest = ed.evidencias[0];
+                                if (latest.ia) {
+                                    document.getElementById('iaResult').innerText = latest.ia;
+                                    sysLog(`🧠 IA: ${latest.ia}`, "IA");
+                                }
+                                document.getElementById('iaStatus').innerText = 'READY';
+                            }
+                        } catch (e) { }
+                    }, 8000);
                 }
-            });
-            setTimeout(()=>{ emDisparo=false; document.body.style.background=""; }, 3000);
+            } catch (e) { sysLog("Erro no disparo: " + e, "ALERT"); }
+            setTimeout(() => { emDisparo = false; document.body.style.background = ""; }, 3000);
         }
+
+        // Init check
+        {% if sessao_ativa %}
+        sessionActive = true;
+        sessionStart = new Date('{{ sessao_ativa.data_inicio|date:"c" }}').getTime();
+        document.getElementById('sessionBar').classList.remove('inactive');
+        document.getElementById('sessionLabel').innerText = '{{ sessao_ativa.titulo }}';
+        document.getElementById('btnSession').innerText = '■ ENCERRAR SESSÃO';
+        document.getElementById('btnSession').className = 'btn-main btn-danger';
+        {% endif %}
     </script>
 </body>
+
 </html>

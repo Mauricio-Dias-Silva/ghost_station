@@ -126,3 +126,17 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# === GHOST STATION CONFIG ===
+# IP da câmera (DroidCam, IP Webcam, etc.) — configurável via env
+GHOST_CAMERA_URL = os.environ.get(
+    'GHOST_CAMERA_URL',
+    'http://10.93.175.172:8080/video?dummy=param.mjpg'
+)
+GHOST_AUDIO_URL = os.environ.get(
+    'GHOST_AUDIO_URL',
+    'http://10.93.175.172:8080/audio.wav'
+)
+
+# Gemini API (para análise IA das evidências)
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
