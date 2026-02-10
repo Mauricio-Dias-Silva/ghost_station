@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-^(@6d3a$!u124q^!(4al*am#89&0qh2%x84vb&)3(nimv&56@o
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "*").split(",")
 
 
 # Application definition
@@ -43,6 +43,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -117,7 +118,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
-
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # Configuração de Arquivos de Mídia (Fotos)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
@@ -140,3 +141,36 @@ GHOST_AUDIO_URL = os.environ.get(
 
 # Gemini API (para análise IA das evidências)
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
+
+# ==============================================================================
+#  INSTRUÇÕES PYTHONJET (Cloud Run Auto-Config)
+# ==============================================================================
+
+import dj_database_url
+
+# --- 1. DETECÇÃO DE AMBIENTE (NUVEM VS LOCAL) ---
+IS_CLOUD_RUN = os.environ.get('CLOUD_RUN_SERVICE_NAME') is not None
+
+if IS_CLOUD_RUN:
+    # Segurança
+    CSRF_TRUSTED_ORIGINS = ['https://*.run.app', 'https://*.pythonjet.app']
+    ALLOWED_HOSTS = ['*']
+    DEBUG = False
+
+    # Banco de Dados (PostgreSQL via Socket)
+    if os.environ.get('CLOUD_SQL_CONNECTION_NAME'):
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql',
+                'HOST': f"/cloudsql/{os.environ.get('CLOUD_SQL_CONNECTION_NAME')}",
+                'NAME': os.environ.get('DB_NAME'),
+                'USER': os.environ.get('DB_USER'),
+                'PASSWORD': os.environ.get('DB_PASSWORD'),
+                'PORT': '',
+            }
+        }
+
+    # Arquivos Estáticos (WhiteNoise)
+    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
