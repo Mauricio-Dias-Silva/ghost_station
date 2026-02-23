@@ -97,10 +97,37 @@ class VideoCamera:
         image = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
         image = cv2.resize(image, (640, 480))
 
-        # Ruído Digital (efeito paranormal)
-        h, w, c = image.shape
-        ruido = np.random.randint(0, 256, (h, w, 3), dtype=np.uint8)
-        frame_caotico = cv2.addWeighted(image, 1 - self.peso_ruido, ruido, self.peso_ruido, 0)
+        # ==========================================
+        # EFEITO NIGHT VISION (Ghost Hunting UI)
+        # ==========================================
+        # 1. Converter para escala de cinza
+        gray_frame = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        
+        # 2. Aplicar mapa de cores (LUT) Verde
+        # Criando um mapa de cores customizado (Preto para Verde Claro)
+        lut = np.zeros((256, 1, 3), dtype=np.uint8)
+        lut[:, 0, 0] = 0           # Blue (0)
+        lut[:, 0, 1] = np.arange(256) # Green (0 a 255)
+        lut[:, 0, 2] = 0           # Red (0)
+        
+        night_vision = cv2.LUT(gray_frame, lut)
+        
+        # 3. Adicionar Ruído Granulado (ISO alto simulado)
+        h, w, c = night_vision.shape
+        ruido = np.random.randint(0, 50, (h, w, 3), dtype=np.uint8)
+        frame_caotico = cv2.addWeighted(night_vision, 1.0, ruido, self.peso_ruido, 0)
+        
+        # 4. Adicionar Vinheta (Bordas escuras)
+        X_kernel = cv2.getGaussianKernel(w, w/2)
+        Y_kernel = cv2.getGaussianKernel(h, h/2)
+        kernel = Y_kernel * X_kernel.T
+        mask = 255 * kernel / np.linalg.norm(kernel)
+        mask = cv2.resize(mask, (w, h))
+        vignette = np.zeros_like(frame_caotico, dtype=np.float32)
+        for i in range(3):
+            vignette[:,:,i] = frame_caotico[:,:,i] * mask
+        frame_caotico = np.clip(vignette, 0, 255).astype(np.uint8)
+        # ==========================================
 
         # Detecção de rostos
         gray = cv2.cvtColor(frame_caotico, cv2.COLOR_BGR2GRAY)

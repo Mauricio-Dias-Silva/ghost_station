@@ -174,3 +174,11 @@ if IS_CLOUD_RUN:
     STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
+    # Arquivos de Mídia (Fotos dos Fantasmas)
+    GS_BUCKET_NAME = os.environ.get("GS_BUCKET_NAME")
+    if GS_BUCKET_NAME:
+        DEFAULT_FILE_STORAGE = "storages.backends.gcloud.GoogleCloudStorage"
+        GS_DEFAULT_ACL = "publicRead"
+        MEDIA_URL = f"https://storage.googleapis.com/{GS_BUCKET_NAME}/"
+
+

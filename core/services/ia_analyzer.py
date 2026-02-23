@@ -12,23 +12,27 @@ except ImportError:
     HAS_GEMINI = False
 
 
+import json
+
 SYSTEM_PROMPT = """Você é o módulo de análise do GHOST STATION, um sistema de investigação paranormal.
-Você recebe imagens capturadas por câmeras durante investigações.
+Sua tarefa é ANALISAR A IMAGEM e responder SOMENTE EM JSON formatado exatamente como a estrutura abaixo.
 
-Sua tarefa é ANALISAR A IMAGEM e responder em formato estruturado:
+ESTRUTURA JSON EXIGIDA:
+{
+    "classificacao": "string curta (Ex: Pareidolia, Reflexo, Anomalia Inexplicada, Pessoa Real, Nada Detectado)",
+    "confianca": float (0.0 até 100.0),
+    "analise": "string descritiva detalhada (Possíveis explicações racionais vs paranormais)",
+    "nota_paranormal": int (0 até 10)
+}
 
-1. CLASSIFICAÇÃO: O que você vê? (Pareidolia, Reflexo, Sombra, Artefato Digital, Anomalia Inexplicada, Pessoa Real, Animal, Nada Detectado)
-2. CONFIANÇA: Qual a sua confiança na classificação? (0-100%)
-3. DESCRIÇÃO: Descreva objetivamente o que aparece na imagem
-4. ANÁLISE TÉCNICA: Possíveis explicações racionais (luz, reflexo, ruído digital, etc.)
-5. NOTA_PARANORMAL: De 0 a 10, quão inexplicável é essa imagem? (0 = totalmente explicável, 10 = completamente anômalo)
-
-Responda em português. Seja científico mas aberto a possibilidades.
-Use tom profissional de investigação forense."""
-
+Regras:
+- Responda em português.
+- NUNCA retorne blocos de código markdown como ```json
+- Retorne apenas o objeto JSON válido.
+- Seja científico, investigativo, mas mantenha a mente aberta."""
 
 def analisar_evidencia(imagem_path: str) -> dict:
-    """Analisa uma imagem de evidência usando Gemini Vision."""
+    """Analisa uma imagem de evidência usando Gemini Vision e força saída JSON."""
     if not HAS_GEMINI:
         return {
             'classificacao': 'IA Indisponível',
@@ -48,9 +52,12 @@ def analisar_evidencia(imagem_path: str) -> dict:
 
     try:
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-2.0-flash')
+        # Using response_mime_type to force JSON on gemini-2.0-flash
+        model = genai.GenerativeModel(
+            'gemini-2.0-flash',
+            generation_config={"response_mime_type": "application/json"}
+        )
 
-        # Carregar imagem
         full_path = os.path.join(settings.BASE_DIR, imagem_path.lstrip('/'))
         if not os.path.exists(full_path):
             return {
@@ -65,44 +72,36 @@ def analisar_evidencia(imagem_path: str) -> dict:
 
         response = model.generate_content([
             SYSTEM_PROMPT,
-            {"mime_type": "image/jpeg", "data": image_data},
-            "Analise esta imagem capturada durante uma investigação paranormal."
+            {"mime_type": "image/jpeg", "data": image_data}
         ])
 
-        texto = response.text
-
-        # Parse básico
-        confianca = 50.0
-        classificacao = 'Analisado'
-        nota = 5
-
-        for line in texto.split('\n'):
-            line_lower = line.lower().strip()
-            if 'confiança' in line_lower or 'confianca' in line_lower:
-                import re
-                nums = re.findall(r'(\d+)', line)
-                if nums:
-                    confianca = float(nums[0])
-            if 'classificação' in line_lower or 'classificacao' in line_lower:
-                classificacao = line.split(':', 1)[-1].strip() if ':' in line else classificacao
-            if 'nota_paranormal' in line_lower or 'nota paranormal' in line_lower:
-                import re
-                nums = re.findall(r'(\d+)', line)
-                if nums:
-                    nota = int(nums[0])
+        texto = response.text.strip()
+        
+        # Fallback to remove ```json if the model still includes it 
+        if texto.startswith("```json"):
+            texto = texto.replace("```json", "", 1).replace("```", "")
+        
+        data = json.loads(texto)
 
         return {
-            'classificacao': classificacao[:30],
-            'confianca': confianca,
-            'analise': texto,
-            'nota_paranormal': nota,
+            'classificacao': str(data.get('classificacao', 'Desconhecido'))[:30],
+            'confianca': float(data.get('confianca', 0)),
+            'analise': str(data.get('analise', 'Nenhuma análise detalhada retornada.')),
+            'nota_paranormal': int(data.get('nota_paranormal', 0)),
         }
 
+    except json.JSONDecodeError as e:
+        return {
+            'classificacao': 'Falha de Parse',
+            'confianca': 0,
+            'analise': f'O modelo não retornou um JSON válido. Raw: {response.text}',
+            'nota_paranormal': 0,
+        }
     except Exception as e:
         return {
             'classificacao': 'Erro na Análise',
             'confianca': 0,
-            'analise': f'Erro ao processar: {str(e)}',
+            'analise': f'Erro ao processar a requisição: {str(e)}',
             'nota_paranormal': 0,
         }
 
