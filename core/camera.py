@@ -35,6 +35,7 @@ class VideoCamera:
         )
         self.peso_ruido = 0.3
         self._connected = False
+        self.last_gray = None # Para calcular Motion Score ITC
 
     def _connect(self):
         """Conecta à câmera sob demanda (lazy-load)."""
@@ -83,6 +84,59 @@ class VideoCamera:
                     (80, 320), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (80, 80, 80), 1)
         ret, jpeg = cv2.imencode('.jpg', img)
         return jpeg.tobytes()
+
+    def get_itc_frame(self):
+        """
+        Frame especializado para o ITC Visual (Telefone do Além).
+        Aplica filtros de alto contraste (CLAHE), detecção de bordas (Canny) 
+        e mesclagem para realçar padrões anômalos. Calcula o 'Motion Score'.
+        Retorna: (jpeg_bytes, motion_score)
+        """
+        if not self._connect():
+            return self._frame_offline(), 0
+
+        success, image = self.video.read()
+        if not success:
+            return self._frame_offline(), 0
+
+        image = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
+        image = cv2.resize(image, (640, 480))
+
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+        # MOTION SCORE (Diferença absoluta para detectar vultos/movimentos)
+        motion_score = 0
+        if self.last_gray is not None:
+            diff = cv2.absdiff(self.last_gray, gray)
+            # Acima de um threshold para ignorar ruído normal
+            _, thresh_diff = cv2.threshold(diff, 25, 255, cv2.THRESH_BINARY)
+            motion_score = int(np.sum(thresh_diff) / 255) # Conta pixels alterados
+        self.last_gray = gray.copy()
+
+        # APERFEIÇOAMENTO PARANORMAL (FILTROS)
+        # 1. CLAHE (Contrast Limited Adaptive Histogram Equalization) para realçar variações térmicas/sombras
+        clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8,8))
+        contrast_gray = clahe.apply(gray)
+
+        # 2. Canny Edge Detection (Linhas estruturais)
+        edges = cv2.Canny(contrast_gray, 50, 150)
+
+        # 3. Mesclagem Térmica Falsa (Mapa de calor em vermelho para Ghost Hunting)
+        # Transforma o gray em mapa de cor quente (Autumn/Inferno/Jet - vamos usar Autumn para vermelho/amarelo)
+        heatmap = cv2.applyColorMap(contrast_gray, cv2.COLORMAP_AUTUMN)
+
+        # 4. Sobrepor as bordas no mapa de calor em verde ciano forte
+        edges_bgr = cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
+        edges_bgr[np.where((edges_bgr == [255, 255, 255]).all(axis=2))] = [255, 255, 0] # Ciano/Amarelo nas bordas
+
+        # Mix: Heatmap escurecido + Bordas brilhantes
+        final_itc = cv2.addWeighted(heatmap, 0.4, edges_bgr, 0.8, 0)
+
+        # HUD Overlay
+        cv2.putText(final_itc, f'ITC ACTIVE // MOTION: {motion_score}', (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+
+        ret, jpeg = cv2.imencode('.jpg', final_itc)
+        return jpeg.tobytes(), motion_score
 
     def processar_anomalia_unica(self, audio_level=0, mag_level=0, origem='desconhecido',
                                   lat=None, lon=None, sessao=None):

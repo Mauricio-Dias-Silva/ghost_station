@@ -527,6 +527,61 @@
             text-shadow: 0 0 5px var(--purple);
         }
 
+        /* DIMENSIONALITY METER */
+        .dim-box {
+            margin-top: 10px;
+            padding: 8px;
+            border: 1px dashed var(--cyan);
+            background: rgba(0, 255, 255, 0.03);
+        }
+
+        .dim-meter {
+            height: 12px;
+            background: #222;
+            border-radius: 6px;
+            overflow: hidden;
+            margin: 5px 0;
+            display: flex;
+        }
+
+        .dim-seg {
+            height: 100%;
+            flex: 1;
+            opacity: 0.2;
+            transition: all 0.5s ease;
+        }
+
+        .dim-seg.active {
+            opacity: 1;
+            box-shadow: 0 0 8px currentColor;
+        }
+
+        .seg-3d {
+            background: var(--primary);
+            color: var(--primary);
+        }
+
+        .seg-4d {
+            background: var(--amber);
+            color: var(--amber);
+        }
+
+        .seg-5d {
+            background: var(--purple);
+            color: var(--purple);
+        }
+
+        .sync-log {
+            font-size: 8px;
+            color: var(--cyan);
+            font-family: monospace;
+            margin-top: 5px;
+            border-top: 1px solid #333;
+            padding-top: 4px;
+            height: 40px;
+            overflow-y: hidden;
+        }
+
         @keyframes blink {
             50% {
                 opacity: 0;
@@ -582,6 +637,8 @@
         <div class="panel header">
             <div class="logo">GHOST_STATION <span>// v3.0 ULTIMATE</span></div>
             <div class="header-right">
+                <div style="color: var(--amber);"><span id="kpIndexHeader">Kp: 0.0</span></div>
+                <div style="color: var(--cyan);"><span id="snrHeader">SNR: 0.0</span></div>
                 <div><span class="status-dot" id="camDot"></span>CAM: <span id="camStatus">---</span></div>
                 <div><span class="status-dot" id="iaDot"></span>IA: <span id="iaStatus">READY</span></div>
                 <div id="sysClock" style="color: var(--cyan);">00:00:00</div>
@@ -632,8 +689,17 @@
             <button class="btn-main btn-danger" id="btnSB" onclick="toggleSpiritBox()">⚡ ATIVAR VARREDURA</button>
 
             <div style="margin-top:8px;">
+                <a href="/evp/" class="btn-main btn-cyan"
+                    style="display:block; text-align:center; text-decoration:none; margin-bottom: 5px;">🎙 EVP
+                    CONSOLE</a>
+                <a href="/itc/" class="btn-main btn-amber"
+                    style="display:block; text-align:center; text-decoration:none; margin-bottom: 5px;">👁️ ITC
+                    VISUAL</a>
                 <a href="/scanner/" class="btn-main btn-amber"
-                    style="display:block; text-align:center; text-decoration:none;">📱 SPECTRAL SCANNER</a>
+                    style="display:block; text-align:center; text-decoration:none; margin-bottom: 5px; filter: hue-rotate(180deg);">📱
+                    SPECTRAL SCANNER</a>
+                <a href="/video_call/" class="btn-main btn-purple"
+                    style="display:block; text-align:center; text-decoration:none;">🛰️ VIDEO CALL (5D)</a>
             </div>
         </div>
 
@@ -692,6 +758,22 @@
                 <div style="margin-top:3px;font-size:9px;">
                     Nota Paranormal: <span class="ia-score" id="iaScore">-</span>/10
                 </div>
+
+                <!-- NEW: DIMENSIONALITY METER -->
+                <div class="dim-box">
+                    <div style="display:flex; justify-content:space-between; font-size:8px;">
+                        <span>ESCALA VIBRACIONAL</span>
+                        <span id="dimLabel">ESTÁVEL (3D)</span>
+                    </div>
+                    <div class="dim-meter">
+                        <div class="dim-seg seg-3d active" id="seg3d"></div>
+                        <div class="dim-seg seg-4d" id="seg4d"></div>
+                        <div class="dim-seg seg-5d" id="seg5d"></div>
+                    </div>
+                    <div class="sync-log" id="syncLog">
+                        > Sistema em modo de busca cognitiva...
+                    </div>
+                </div>
             </div>
 
             <h2 style="margin-top:8px;">EVIDÊNCIAS (ÚLTIMAS)</h2>
@@ -704,6 +786,56 @@
                 {% empty %}
                 <div style="padding:10px;text-align:center;font-size:10px;grid-column:1/-1;">Aguardando dados...</div>
                 {% endfor %}
+            </div>
+
+            <!-- ARQUIVO DAS SOMBRAS (FASE 6) -->
+            <h2 style="margin-top:15px; border-color: var(--purple);">ARQUIVO DAS SOMBRAS (5D)</h2>
+            <div class="shadow-archive" id="shadowArchive">
+                {% for sintese in registros_sintese %}
+                <div class="archive-item"
+                    style="border: 1px solid rgba(168, 85, 247, 0.3); padding: 5px; margin-bottom: 5px; background: rgba(0,0,0,0.3);">
+                    <div style="display:flex; justify-content:space-between; font-size: 9px; color: var(--purple);">
+                        <span>{{ sintese.entidade_nome }}</span>
+                        <span>{{ sintese.data_sessao|date:"d/m H:i" }}</span>
+                    </div>
+                    <div style="font-size: 8px; color: #666; margin-top: 2px;">
+                        Coerência: {{ sintese.coerencia_maxima|stringformat:".0f" }}% | {{ sintese.densidade_final }}
+                    </div>
+                </div>
+                {% empty %}
+                <div style="padding:10px;text-align:center;font-size:10px; color: #444;">Nenhuma entidade arquivada.
+                </div>
+                {% endfor %}
+            </div>
+            <!-- BIO-SINCRONIA MONITOR (FASE 8) -->
+            <h2 style="margin-top:15px; border-color: #00ff64;">MONITOR BIOMÉDICO (OBSERVADOR)</h2>
+            <div class="bio-panel"
+                style="background: rgba(0,255,100,0.05); padding: 10px; border-radius: 4px; border: 1px solid rgba(0,255,100,0.1);">
+                <div style="display:flex; justify-content:space-between; margin-bottom: 5px;">
+                    <div style="text-align:center; flex:1;">
+                        <span style="font-size:8px; color:#00ff64; display:block;">BPM</span>
+                        <span id="dashBpm" style="font-size:18px;">--</span>
+                    </div>
+                    <div style="text-align:center; flex:1;">
+                        <span style="font-size:8px; color:#00ff64; display:block;">ESTRESSE</span>
+                        <span id="dashStress" style="font-size:18px;">--</span>%
+                    </div>
+                    <div style="text-align:center; flex:1;">
+                        <span style="font-size:8px; color:#00ff64; display:block;">BIO-SYNC</span>
+                        <span id="dashBioSync" style="font-size:18px;">--</span>%
+                    </div>
+                </div>
+                <!-- ENERGY BAR -->
+                <div style="margin-top:5px;">
+                    <div style="display:flex; justify-content:space-between; font-size:8px; margin-bottom: 2px;">
+                        <span>ENERGIA METABÓLICA</span>
+                        <span id="energyVal">100%</span>
+                    </div>
+                    <div class="progress-container" style="height: 4px; background: rgba(0,255,100,0.1);">
+                        <div id="energyBar" class="progress-bar"
+                            style="width: 100%; height: 100%; background: #00ff64; box-shadow: 0 0 5px #00ff64;"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -883,6 +1015,7 @@
             }
         }
 
+
         // === SPIRIT BOX ===
         function toggleSpiritBox() {
             if (!audioCtx) { alert("Conecte o áudio primeiro!"); return; }
@@ -952,7 +1085,35 @@
                     // Update IA status
                     document.getElementById('iaDot').className = 'status-dot online';
                     document.getElementById('iaStatus').innerText = 'ANALISANDO...';
-                    // Wait for IA result
+                    // FASE 7: Rigor Analítico
+                    function updateTechnicalStats() {
+                        fetch('/api/aura/status/')
+                            .then(res => res.json())
+                            .then(data => {
+                                document.getElementById('kpIndexHeader').innerText = `Kp: ${data.kp_index.toFixed(2)}`;
+                                document.getElementById('snrHeader').innerText = `SNR: ${data.snr.toFixed(2)}`;
+
+                                // FASE 8: Bio-Sincronia
+                                if (document.getElementById('dashBpm')) {
+                                    document.getElementById('dashBpm').innerText = data.obs_bpm.toFixed(0);
+                                    document.getElementById('dashStress').innerText = data.obs_stress.toFixed(0);
+                                    document.getElementById('dashBioSync').innerText = data.bio_sync.toFixed(0);
+                                    document.getElementById('energyVal').innerText = data.metabolic.toFixed(0) + "%";
+                                    document.getElementById('energyBar').style.width = data.metabolic + "%";
+                                }
+
+                                // Atualizar barra de dimensão se estiver em busca
+                                if (data.coerencia > 0) {
+                                    document.getElementById('seg3d').classList.add('active');
+                                    if (data.coerencia > 50) document.getElementById('seg4d').classList.add('active');
+                                    if (data.coerencia > 80) document.getElementById('seg5d').classList.add('active');
+                                    document.getElementById('dimLabel').innerText = data.densidade;
+                                }
+                            });
+                    }
+                    setInterval(updateTechnicalStats, 5000);
+
+                    // Inicializar relógio
                     setTimeout(async () => {
                         try {
                             const er = await fetch('/api/evidencias/');
@@ -963,6 +1124,28 @@
                                     document.getElementById('iaResult').innerText = latest.ia;
                                     sysLog(`🧠 IA: ${latest.ia}`, "IA");
                                 }
+
+                                // UPDATE DIMENSIONALITY METER
+                                const dim = latest.dimensao || '3D';
+                                document.getElementById('dimLabel').innerText = `SINAL ${dim}`;
+                                ['seg3d', 'seg4d', 'seg5d'].forEach(id => document.getElementById(id).classList.remove('active'));
+                                if (dim.includes('3D')) document.getElementById('seg3d').classList.add('active');
+                                else if (dim.includes('4D')) {
+                                    document.getElementById('seg3d').classList.add('active');
+                                    document.getElementById('seg4d').classList.add('active');
+                                } else if (dim.includes('5D') || dim.includes('6D')) {
+                                    document.getElementById('seg3d').classList.add('active');
+                                    document.getElementById('seg4d').classList.add('active');
+                                    document.getElementById('seg5d').classList.add('active');
+                                }
+
+                                // UPDATE SYNC LOG
+                                if (latest.fusao && latest.fusao.sincronia) {
+                                    const log = document.getElementById('syncLog');
+                                    log.innerHTML = `> SYNC: ${latest.fusao.origem} (${latest.fusao.coerencia.toFixed(0)}%)<br>` + log.innerHTML;
+                                    sysLog(`⚡ SINCRONIA: ${latest.fusao.origem}`, "IA");
+                                }
+
                                 document.getElementById('iaStatus').innerText = 'READY';
                             }
                         } catch (e) { }
@@ -973,14 +1156,20 @@
         }
 
         // Init check
-        {% if sessao_ativa %}
-        sessionActive = true;
-        sessionStart = new Date('{{ sessao_ativa.data_inicio|date:"c" }}').getTime();
-        document.getElementById('sessionBar').classList.remove('inactive');
-        document.getElementById('sessionLabel').innerText = '{{ sessao_ativa.titulo }}';
-        document.getElementById('btnSession').innerText = '■ ENCERRAR SESSÃO';
-        document.getElementById('btnSession').className = 'btn-main btn-danger';
-        {% endif %}
+        const _sessionData = {
+            active: "{{ sessao_ativa|yesno:'true,false' }}" === "true",
+            start: "{{ sessao_ativa.data_inicio|date:'c' }}",
+            titulo: "{{ sessao_ativa.titulo|escapejs }}"
+        };
+
+        if (_sessionData.active) {
+            sessionActive = true;
+            sessionStart = new Date(_sessionData.start).getTime();
+            document.getElementById('sessionBar').classList.remove('inactive');
+            document.getElementById('sessionLabel').innerText = _sessionData.titulo;
+            document.getElementById('btnSession').innerText = '■ ENCERRAR SESSÃO';
+            document.getElementById('btnSession').className = 'btn-main btn-danger';
+        }
     </script>
 </body>
 

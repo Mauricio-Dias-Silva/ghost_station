@@ -1,0 +1,1394 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EVP CONSOLE — Ghost Station</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --green: #00ff41;
+            --green-dim: #00aa2a;
+            --green-glow: rgba(0, 255, 65, 0.15);
+            --red-alert: #ff2d2d;
+            --yellow: #ffd700;
+            --orange: #ff6b00;
+            --purple: #9b59b6;
+            --bg: #030a03;
+            --surface: #080f08;
+            --surface2: #0d1a0d;
+            --border: rgba(0, 255, 65, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--green);
+            font-family: 'Share Tech Mono', monospace;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Scanlines effect */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(0deg,
+                    transparent,
+                    transparent 2px,
+                    rgba(0, 0, 0, 0.05) 2px,
+                    rgba(0, 0, 0, 0.05) 4px);
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(90deg, var(--bg), var(--surface2), var(--bg));
+            border-bottom: 1px solid var(--border);
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-logo {
+            font-family: 'Orbitron', monospace;
+            font-size: 11px;
+            color: var(--green-dim);
+            letter-spacing: 3px;
+        }
+
+        .header-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 20px;
+            font-weight: 900;
+            letter-spacing: 6px;
+            text-shadow: 0 0 20px var(--green), 0 0 40px rgba(0, 255, 65, 0.3);
+            animation: flicker 8s infinite;
+        }
+
+        .header-back {
+            color: var(--green-dim);
+            text-decoration: none;
+            font-size: 11px;
+            letter-spacing: 2px;
+            border: 1px solid var(--border);
+            padding: 6px 12px;
+            transition: all 0.3s;
+        }
+
+        .header-back:hover {
+            background: var(--green-glow);
+            color: var(--green);
+            box-shadow: 0 0 10px var(--green-glow);
+        }
+
+        @keyframes flicker {
+
+            0%,
+            95%,
+            100% {
+                opacity: 1;
+            }
+
+            96% {
+                opacity: 0.8;
+            }
+
+            97% {
+                opacity: 1;
+            }
+
+            98% {
+                opacity: 0.7;
+            }
+        }
+
+        /* Status Bar */
+        .status-bar {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 8px 24px;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            font-size: 11px;
+            letter-spacing: 1px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--green-dim);
+            display: inline-block;
+            margin-right: 6px;
+        }
+
+        .status-dot.active {
+            background: var(--green);
+            animation: pulse-dot 1s infinite;
+        }
+
+        .status-dot.alert {
+            background: var(--red-alert);
+            animation: pulse-dot 0.5s infinite;
+        }
+
+        @keyframes pulse-dot {
+
+            0%,
+            100% {
+                opacity: 1;
+                box-shadow: 0 0 6px currentColor;
+            }
+
+            50% {
+                opacity: 0.4;
+                box-shadow: none;
+            }
+        }
+
+        /* Main Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            grid-template-rows: auto 1fr;
+            gap: 1px;
+            background: var(--border);
+            min-height: calc(100vh - 100px);
+        }
+
+        .panel {
+            background: var(--bg);
+            padding: 20px;
+        }
+
+        .panel-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 10px;
+            letter-spacing: 4px;
+            color: var(--green-dim);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+            margin-bottom: 16px;
+        }
+
+        /* ========================
+       CENTRAL — Espectro FFT
+    ======================== */
+        .panel-spectrum {
+            grid-column: 1;
+            grid-row: 1;
+        }
+
+        #spectrum-canvas {
+            width: 100%;
+            height: 200px;
+            background: #000;
+            border: 1px solid var(--border);
+            display: block;
+            border-radius: 2px;
+        }
+
+        .freq-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 9px;
+            color: var(--green-dim);
+            letter-spacing: 1px;
+            margin-top: 4px;
+            padding: 0 2px;
+        }
+
+        /* Medidores */
+        .meters-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .meter-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 12px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .meter-card::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: var(--fill, 0%);
+            background: var(--green-glow);
+            transition: height 0.3s;
+        }
+
+        .meter-label {
+            font-size: 9px;
+            letter-spacing: 2px;
+            color: var(--green-dim);
+            margin-bottom: 6px;
+        }
+
+        .meter-value {
+            font-family: 'Orbitron', monospace;
+            font-size: 22px;
+            font-weight: 700;
+            text-shadow: 0 0 10px var(--green);
+            position: relative;
+        }
+
+        .meter-unit {
+            font-size: 9px;
+            color: var(--green-dim);
+            margin-top: 2px;
+            position: relative;
+        }
+
+        /* Zona de Frequência */
+        .freq-zones {
+            display: flex;
+            gap: 4px;
+            margin-top: 12px;
+        }
+
+        .freq-zone {
+            flex: 1;
+            padding: 6px 4px;
+            text-align: center;
+            font-size: 9px;
+            letter-spacing: 1px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            transition: all 0.3s;
+        }
+
+        .freq-zone.active-zone {
+            border-color: var(--red-alert);
+            background: rgba(255, 45, 45, 0.1);
+            color: var(--red-alert);
+            text-shadow: 0 0 8px var(--red-alert);
+            animation: zone-pulse 0.5s infinite;
+        }
+
+        @keyframes zone-pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        .freq-zone .zone-label {
+            color: var(--green-dim);
+        }
+
+        .freq-zone .zone-range {
+            font-size: 8px;
+            margin-top: 2px;
+        }
+
+        /* Controles */
+        .controls-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+            align-items: center;
+        }
+
+        .btn {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 2px;
+            padding: 10px 20px;
+            border: 1px solid;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: transparent;
+            text-transform: uppercase;
+        }
+
+        .btn-start {
+            border-color: var(--green);
+            color: var(--green);
+        }
+
+        .btn-start:hover,
+        .btn-start.active {
+            background: var(--green);
+            color: #000;
+            box-shadow: 0 0 20px var(--green), 0 0 40px rgba(0, 255, 65, 0.3);
+        }
+
+        .btn-stop {
+            border-color: var(--red-alert);
+            color: var(--red-alert);
+        }
+
+        .btn-stop:hover {
+            background: var(--red-alert);
+            color: #000;
+            box-shadow: 0 0 20px var(--red-alert);
+        }
+
+        .btn-analyze {
+            border-color: var(--yellow);
+            color: var(--yellow);
+        }
+
+        .btn-analyze:hover {
+            background: var(--yellow);
+            color: #000;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+
+        .btn-clear {
+            border-color: var(--green-dim);
+            color: var(--green-dim);
+            margin-left: auto;
+        }
+
+        .btn-clear:hover {
+            background: var(--surface2);
+        }
+
+        /* Sessão Info */
+        .session-badge {
+            font-size: 10px;
+            letter-spacing: 1px;
+            padding: 8px 16px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            margin-left: auto;
+        }
+
+        .session-badge span {
+            color: var(--green);
+        }
+
+        /* ========================
+       PAINEL DIREITO — Feed IA
+    ======================== */
+        .panel-right {
+            grid-column: 2;
+            grid-row: 1 / 3;
+            overflow-y: auto;
+            max-height: calc(100vh - 100px);
+        }
+
+        .evp-feed {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .evp-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--green-dim);
+            padding: 12px;
+            font-size: 11px;
+            transition: border-color 0.3s;
+            animation: card-in 0.4s ease-out;
+        }
+
+        @keyframes card-in {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .evp-card.anomalia {
+            border-left-color: var(--red-alert);
+            background: rgba(255, 45, 45, 0.05);
+        }
+
+        .evp-card.possivel {
+            border-left-color: var(--yellow);
+            background: rgba(255, 215, 0, 0.05);
+        }
+
+        .evp-card.evp_confirmado {
+            border-left-color: var(--orange);
+            background: rgba(255, 107, 0, 0.08);
+            animation: critical-glow 1s infinite;
+        }
+
+        @keyframes critical-glow {
+
+            0%,
+            100% {
+                box-shadow: 0 0 5px rgba(255, 107, 0, 0.3);
+            }
+
+            50% {
+                box-shadow: 0 0 20px rgba(255, 107, 0, 0.6);
+            }
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .card-time {
+            color: var(--green-dim);
+            font-size: 10px;
+        }
+
+        .card-nota {
+            font-family: 'Orbitron', monospace;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .nota-critica {
+            color: var(--red-alert);
+            text-shadow: 0 0 8px var(--red-alert);
+        }
+
+        .nota-alta {
+            color: var(--orange);
+        }
+
+        .nota-media {
+            color: var(--yellow);
+        }
+
+        .nota-baixa {
+            color: var(--green-dim);
+        }
+
+        .card-classificacao {
+            font-size: 9px;
+            letter-spacing: 2px;
+            color: var(--green-dim);
+            margin-bottom: 6px;
+        }
+
+        .card-transcricao {
+            color: var(--green);
+            margin-bottom: 6px;
+            font-size: 12px;
+            border-left: 2px solid var(--green-dim);
+            padding-left: 8px;
+        }
+
+        .card-mensagem {
+            color: var(--yellow);
+            font-size: 12px;
+            margin-bottom: 6px;
+            font-style: italic;
+        }
+
+        .card-analise {
+            color: rgba(0, 200, 50, 0.7);
+            font-size: 10px;
+            line-height: 1.5;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s;
+        }
+
+        .evp-card:hover .card-analise {
+            max-height: 200px;
+        }
+
+        .card-freqs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 6px;
+        }
+
+        .freq-tag {
+            font-size: 9px;
+            padding: 2px 6px;
+            border: 1px solid var(--red-alert);
+            color: var(--red-alert);
+            letter-spacing: 1px;
+        }
+
+        /* Loader */
+        .card-loading {
+            color: var(--green-dim);
+            font-size: 10px;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0;
+            }
+        }
+
+        /* ========================
+       BAIXO — Transcrição Live
+    ======================== */
+        .panel-transcript {
+            grid-column: 1;
+            grid-row: 2;
+        }
+
+        .transcript-box {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 16px;
+            min-height: 80px;
+            position: relative;
+        }
+
+        .transcript-live {
+            font-size: 16px;
+            color: var(--green);
+            text-shadow: 0 0 8px rgba(0, 255, 65, 0.3);
+            line-height: 1.6;
+            min-height: 48px;
+        }
+
+        .transcript-cursor {
+            display: inline-block;
+            width: 8px;
+            height: 18px;
+            background: var(--green);
+            margin-left: 2px;
+            animation: blink 0.8s infinite;
+            vertical-align: middle;
+        }
+
+        .transcript-interim {
+            color: var(--green-dim);
+            font-style: italic;
+        }
+
+        .transcript-label {
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            font-size: 9px;
+            letter-spacing: 2px;
+            color: var(--green-dim);
+        }
+
+        /* Anomaly Detector Visual */
+        .anomaly-ring {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            border: 2px solid var(--red-alert);
+            box-shadow: 0 0 40px var(--red-alert), inset 0 0 40px rgba(255, 45, 45, 0.2);
+            display: none;
+            z-index: 1000;
+            animation: ring-expand 0.5s ease-out;
+            pointer-events: none;
+        }
+
+        .anomaly-ring.show {
+            display: block;
+        }
+
+        @keyframes ring-expand {
+            from {
+                width: 0;
+                height: 0;
+                opacity: 1;
+            }
+
+            to {
+                width: 200px;
+                height: 200px;
+                opacity: 0;
+            }
+        }
+
+        /* Stats row */
+        .stats-strip {
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            padding: 8px 20px;
+            display: flex;
+            gap: 32px;
+            font-size: 10px;
+            letter-spacing: 1px;
+        }
+
+        .stat-item {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .stat-val {
+            font-family: 'Orbitron', monospace;
+            font-size: 14px;
+            color: var(--green);
+        }
+
+        /* Modal de Anomalia Crítica */
+        .critical-modal {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #0a0000;
+            border: 2px solid var(--red-alert);
+            box-shadow: 0 0 40px rgba(255, 45, 45, 0.5);
+            padding: 20px 24px;
+            z-index: 500;
+            max-width: 320px;
+            animation: modal-in 0.3s ease-out;
+        }
+
+        .critical-modal.show {
+            display: block;
+        }
+
+        @keyframes modal-in {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-title {
+            font-family: 'Orbitron', monospace;
+            color: var(--red-alert);
+            font-size: 12px;
+            letter-spacing: 3px;
+            margin-bottom: 8px;
+            animation: blink 0.5s infinite;
+        }
+
+        .modal-body {
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .modal-close {
+            float: right;
+            cursor: pointer;
+            color: var(--green-dim);
+        }
+
+        /* Scrollbar estilizado */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--green-dim);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-logo">GHOST STATION v2.0</div>
+        <div class="header-title">👁 EVP CONSOLE</div>
+        <a href="/" class="header-back">← DASHBOARD</a>
+    </header>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+        <span><span class="status-dot" id="mic-dot"></span>MICROFONE: <span id="mic-status">OFFLINE</span></span>
+        <span><span class="status-dot" id="speech-dot"></span>SPEECH API: <span
+                id="speech-status">AGUARDANDO</span></span>
+        <span><span class="status-dot" id="ia-dot"></span>IA GEMINI: <span id="ia-status">STANDBY</span></span>
+        <span>SESSÃO EVP: <span id="sessao-titulo" style="color:var(--green)">
+                {% if sessao_evp %}{{ sessao_evp.titulo }}{% else %}SEM SESSÃO{% endif %}
+            </span></span>
+        <span style="margin-left:auto">
+            ANOMALIAS: <span id="stat-anomalias" style="color:var(--red-alert); font-family:Orbitron,monospace;">{{
+                total_anomalias }}</span>
+            &nbsp;|&nbsp;
+            CAPTURAS: <span id="stat-total" style="color:var(--green); font-family:Orbitron,monospace;">{{
+                total_registros }}</span>
+        </span>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="main-grid">
+
+        <!-- ESQUERDA: Spectrum + Controles -->
+        <div class="panel panel-spectrum">
+            <div class="panel-title">► ANALISADOR DE ESPECTRO — FREQUÊNCIAS EM TEMPO REAL</div>
+
+            <canvas id="spectrum-canvas"></canvas>
+
+            <div class="freq-labels">
+                <span>20Hz</span><span>100Hz</span><span>500Hz</span><span>1kHz</span>
+                <span>5kHz</span><span>10kHz</span><span>15kHz</span><span>20kHz+</span>
+            </div>
+
+            <!-- Zonas de Frequência -->
+            <div class="freq-zones">
+                <div class="freq-zone" id="zone-sub">
+                    <div class="zone-label">🔴 SUB</div>
+                    <div class="zone-range">20–60Hz</div>
+                </div>
+                <div class="freq-zone" id="zone-voz">
+                    <div class="zone-label">🟢 VOZ</div>
+                    <div class="zone-range">60–5kHz</div>
+                </div>
+                <div class="freq-zone" id="zone-alta">
+                    <div class="zone-label">🟡 ALTA</div>
+                    <div class="zone-range">5–15kHz</div>
+                </div>
+                <div class="freq-zone" id="zone-ultra">
+                    <div class="zone-label">⚡ ULTRA</div>
+                    <div class="zone-range">15kHz+</div>
+                </div>
+            </div>
+
+            <!-- Medidores -->
+            <div class="meters-row">
+                <div class="meter-card">
+                    <div class="meter-label">NÍVEL ÁUDIO</div>
+                    <div class="meter-value" id="meter-audio">0.0</div>
+                    <div class="meter-unit">RMS</div>
+                </div>
+                <div class="meter-card">
+                    <div class="meter-label">FREQ. DOMINANTE</div>
+                    <div class="meter-value" id="meter-freq">---</div>
+                    <div class="meter-unit">Hz</div>
+                </div>
+                <div class="meter-card">
+                    <div class="meter-label">PICOS ANÔMALOS</div>
+                    <div class="meter-value" id="meter-anomalas" style="color:var(--red-alert)">0</div>
+                    <div class="meter-unit">DETECTADOS</div>
+                </div>
+                <div class="meter-card">
+                    <div class="meter-label">PRESENÇA</div>
+                    <div class="meter-value" id="meter-presenca" style="color:var(--yellow)">0%</div>
+                    <div class="meter-unit">SCORE</div>
+                </div>
+            </div>
+
+            <!-- Controles -->
+            <div class="controls-row">
+                <button class="btn btn-start" id="btn-start">▶ INICIAR ESCUTA</button>
+                <button class="btn btn-stop" id="btn-stop" disabled>■ PARAR</button>
+                <button class="btn btn-analyze" id="btn-analyze" disabled>⚡ ANALISAR AGORA</button>
+                <button class="btn btn-clear" id="btn-clear">✕ LIMPAR</button>
+            </div>
+        </div>
+
+        <!-- DIREITA: Feed de Análises IA -->
+        <div class="panel panel-right">
+            <div class="panel-title">► REGISTROS EVP — ANÁLISE IA</div>
+            <div class="evp-feed" id="evp-feed">
+                {% for r in ultimos_registros %}
+                <div
+                    class="evp-card {% if r.e_anomalia %}anomalia{% endif %} {% if r.classificacao_ia == 'possivel_evp' %}possivel{% endif %} {% if r.classificacao_ia == 'evp_confirmado' %}evp_confirmado{% endif %}">
+                    <div class="card-header">
+                        <span class="card-time">{{ r.data_captura|date:"H:i:s" }}</span>
+                        <span
+                            class="card-nota {% if r.nota_paranormal >= 8 %}nota-critica{% elif r.nota_paranormal >= 6 %}nota-alta{% elif r.nota_paranormal >= 4 %}nota-media{% else %}nota-baixa{% endif %}">{{
+                            r.nota_paranormal }}/10</span>
+                    </div>
+                    <div class="card-classificacao">◉ {{ r.get_classificacao_ia_display }}</div>
+                    {% if r.transcricao %}<div class="card-transcricao">"{{ r.transcricao }}"</div>{% endif %}
+                    {% if r.mensagem_detectada %}<div class="card-mensagem">↳ {{ r.mensagem_detectada }}</div>{% endif %}
+                    {% if r.frequencias_anomalas %}
+                    <div class="card-freqs">
+                        {% for f in r.frequencias_anomalas %}<span class="freq-tag">{{ f|floatformat:0 }}Hz</span>{%
+                        endfor %}
+                    </div>
+                    {% endif %}
+                    <div class="card-analise">{{ r.analise_ia }}</div>
+                </div>
+                {% empty %}
+                <div
+                    style="color:var(--green-dim); font-size:11px; letter-spacing:1px; text-align:center; padding:20px;">
+                    [ AGUARDANDO CAPTURAS EVP ]<br><br>
+                    Inicie uma sessão de escuta para<br>o sistema começar a monitorar.
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- BAIXO: Transcrição Live -->
+        <div class="panel panel-transcript">
+            <div class="panel-title">► TRANSCRIÇÃO EM TEMPO REAL — WEB SPEECH API</div>
+            <div class="transcript-box">
+                <span class="transcript-label">LIVE TRANSCRIPT</span>
+                <div class="transcript-live" id="transcript-text">
+                    <span class="transcript-interim" id="transcript-interim">Aguardando início da escuta...</span>
+                    <span class="transcript-cursor" id="transcript-cursor" style="display:none"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Strip -->
+    <div class="stats-strip">
+        <div class="stat-item">SESSÕES TOTAIS: <span class="stat-val">{{ total_registros }}</span></div>
+        <div class="stat-item">ANOMALIAS: <span class="stat-val" style="color:var(--red-alert)">{{ total_anomalias }}</span></div>
+        <div class="stat-item" id="session-timer" style="margin-left:auto; color:var(--green-dim)">TEMPO: 00:00:00</div>
+    </div>
+
+    <!-- Anomaly Ring Flash -->
+    <div class="anomaly-ring" id="anomaly-ring"></div>
+
+    <!-- Critical Modal -->
+    <div class="critical-modal" id="critical-modal">
+        <span class="modal-close" onclick="document.getElementById('critical-modal').classList.remove('show')">✕</span>
+        <div class="modal-title">⚠ ANOMALIA CRÍTICA DETECTADA</div>
+        <div class="modal-body" id="critical-body"></div>
+    </div>
+
+    <script>
+        // ============================================================
+        // GHOST STATION — EVP CONSOLE ENGINE
+        // ============================================================
+
+        const SAMPLE_RATE = 48000;
+        const FFT_SIZE = 2048;
+        const ANOMALY_THRESHOLD_LOW = 60;    // Hz — abaixo é suspeito
+        const ANOMALY_THRESHOLD_HIGH = 15000; // Hz — acima é suspeito
+        const VOICE_RANGE_LOW = 80;
+        const VOICE_RANGE_HIGH = 5000;
+        const AUTO_ANALYZE_INTERVAL = 12000; // ms — analisar a cada 12s
+        const POLL_INTERVAL = 3000;          // ms — buscar novos registros
+
+        let audioCtx = null;
+        let analyser = null;
+        let mediaStream = null;
+        let animFrame = null;
+        let isListening = false;
+        let recognition = null;
+        let sessaoId = {% if sessao_evp %}{ { sessao_evp.id } } {% else %} null{% endif %};
+        let sessionStartTime = null;
+        let sessionTimerInterval = null;
+        let autoAnalyzeTimer = null;
+        let lastTranscript = '';
+        let lastFreqsAnomalas = [];
+        let lastFreqDominante = null;
+        let lastNivelAudio = 0;
+        let presenceScore = 0;
+
+        const canvas = document.getElementById('spectrum-canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Resize canvas
+        function resizeCanvas() {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // ============================================================
+        // SESSÃO
+        // ============================================================
+        async function iniciarSessaoEvp() {
+            const titulo = `EVP ${new Date().toLocaleTimeString('pt-BR')}`;
+            const resp = await fetch('/api/evp/iniciar/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ titulo })
+            });
+            const data = await resp.json();
+            if (data.status === 'ok') {
+                sessaoId = data.sessao_id;
+                document.getElementById('sessao-titulo').textContent = data.titulo;
+                return sessaoId;
+            }
+        }
+
+        // ============================================================
+        // WEB AUDIO API — FFT
+        // ============================================================
+        async function iniciarAudio() {
+            try {
+                mediaStream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        echoCancellation: false,
+                        noiseSuppression: false,
+                        autoGainControl: false,
+                    }
+                });
+
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: SAMPLE_RATE });
+                const source = audioCtx.createMediaStreamSource(mediaStream);
+                analyser = audioCtx.createAnalyser();
+                analyser.fftSize = FFT_SIZE;
+                analyser.smoothingTimeConstant = 0.6;
+                source.connect(analyser);
+
+                setMicStatus(true);
+                drawSpectrum();
+                return true;
+            } catch (e) {
+                console.error('Erro ao acessar microfone:', e);
+                alert('❌ Permissão de microfone negada. Ative o microfone e recarregue.');
+                return false;
+            }
+        }
+
+        function drawSpectrum() {
+            if (!analyser) return;
+            animFrame = requestAnimationFrame(drawSpectrum);
+
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            analyser.getByteFrequencyData(dataArray);
+
+            const W = canvas.width, H = canvas.height;
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, W, H);
+
+            // Grade
+            ctx.strokeStyle = 'rgba(0,255,65,0.05)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < 8; i++) {
+                const x = (W / 8) * i;
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+            }
+            for (let j = 0; j < 4; j++) {
+                const y = (H / 4) * j;
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+            }
+
+            const nyquist = audioCtx.sampleRate / 2;
+            const barW = W / bufferLength * 2.5;
+            let freqsAnomalas = [];
+            let maxVal = 0, maxIdx = 0;
+            let rmsSum = 0;
+            let subEnergy = 0, voiceEnergy = 0, altaEnergy = 0, ultraEnergy = 0;
+
+            for (let i = 0; i < bufferLength; i++) {
+                const freq = (i / bufferLength) * nyquist;
+                const val = dataArray[i];
+                rmsSum += val * val;
+                if (val > maxVal) { maxVal = val; maxIdx = i; }
+
+                if (freq < ANOMALY_THRESHOLD_LOW && val > 30) subEnergy += val;
+                else if (freq < VOICE_RANGE_HIGH) voiceEnergy += val;
+                else if (freq < ANOMALY_THRESHOLD_HIGH) altaEnergy += val;
+                else if (val > 20) { ultraEnergy += val; freqsAnomalas.push(Math.round(freq)); }
+
+                if ((freq < ANOMALY_THRESHOLD_LOW || freq > ANOMALY_THRESHOLD_HIGH) && val > 40) {
+                    if (!freqsAnomalas.includes(Math.round(freq))) freqsAnomalas.push(Math.round(freq));
+                }
+
+                // Cor baseada em frequência e amplitude
+                let r, g, b;
+                if (freq < ANOMALY_THRESHOLD_LOW) {
+                    r = 255; g = val; b = 0; // Vermelho — suspeito baixo
+                } else if (freq > ANOMALY_THRESHOLD_HIGH) {
+                    r = 255; g = 0; b = val; // Magenta — suspeito ultra
+                } else if (freq > 5000) {
+                    r = val * 0.5; g = 200; b = 0; // Amarelo-verde — alta
+                } else {
+                    r = 0; g = 255; b = 65; // Verde — voz normal
+                }
+
+                const x = i * barW;
+                const barH = (val / 255) * H;
+                const gradient = ctx.createLinearGradient(0, H - barH, 0, H);
+                gradient.addColorStop(0, `rgba(${r},${g},${b},0.9)`);
+                gradient.addColorStop(1, `rgba(${r},${g},${b},0.2)`);
+                ctx.fillStyle = gradient;
+                ctx.fillRect(x, H - barH, barW - 1, barH);
+            }
+
+            // Métricas
+            const rms = Math.sqrt(rmsSum / bufferLength) / 255 * 10;
+            const freqDom = maxIdx > 0 ? Math.round((maxIdx / bufferLength) * nyquist) : 0;
+            lastNivelAudio = rms;
+            lastFreqsAnomalas = [...new Set(freqsAnomalas)].slice(0, 10);
+            lastFreqDominante = freqDom;
+
+            // Calcular score de presença
+            const anomScore = Math.min(freqsAnomalas.length * 15, 60);
+            const audioScore = Math.min(rms * 10, 20);
+            const transScore = lastTranscript.length > 5 ? 20 : 0;
+            presenceScore = Math.min(anomScore + audioScore + transScore, 100);
+
+            updateMeters(rms, freqDom, freqsAnomalas.length, presenceScore);
+            updateZones(subEnergy, voiceEnergy, altaEnergy, ultraEnergy);
+        }
+
+        function updateMeters(rms, freqDom, anomCount, presence) {
+            document.getElementById('meter-audio').textContent = rms.toFixed(2);
+            document.getElementById('meter-freq').textContent = freqDom > 0 ? freqDom : '---';
+            document.getElementById('meter-anomalas').textContent = anomCount;
+            document.getElementById('meter-presenca').textContent = Math.round(presence) + '%';
+
+            // Cor do medidor de presença
+            const presEl = document.getElementById('meter-presenca');
+            if (presence >= 70) presEl.style.color = 'var(--red-alert)';
+            else if (presence >= 40) presEl.style.color = 'var(--orange)';
+            else if (presence >= 20) presEl.style.color = 'var(--yellow)';
+            else presEl.style.color = 'var(--green-dim)';
+        }
+
+        function updateZones(sub, voice, alta, ultra) {
+            const setZone = (id, energy, threshold) => {
+                const el = document.getElementById(id);
+                if (energy > threshold) el.classList.add('active-zone');
+                else el.classList.remove('active-zone');
+            };
+            setZone('zone-sub', sub, 5000);
+            setZone('zone-voz', voice, 50000);
+            setZone('zone-alta', alta, 10000);
+            setZone('zone-ultra', ultra, 1000);
+        }
+
+        // ============================================================
+        // WEB SPEECH API
+        // ============================================================
+        function iniciarSpeech() {
+            const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRec) {
+                document.getElementById('speech-status').textContent = 'NÃO SUPORTADO';
+                return null;
+            }
+
+            recognition = new SpeechRec();
+            recognition.lang = 'pt-BR';
+            recognition.continuous = true;
+            recognition.interimResults = true;
+
+            recognition.onresult = (event) => {
+                let interim = '';
+                let final = '';
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    if (event.results[i].isFinal) {
+                        final += event.results[i][0].transcript;
+                    } else {
+                        interim += event.results[i][0].transcript;
+                    }
+                }
+                if (final) {
+                    lastTranscript = lastTranscript + ' ' + final;
+                    document.getElementById('transcript-text').innerHTML =
+                        `<span>${lastTranscript.trim()}</span><span class="transcript-cursor"></span>`;
+                }
+                document.getElementById('transcript-interim').textContent = interim;
+            };
+
+            recognition.onerror = (e) => {
+                if (e.error !== 'no-speech') {
+                    document.getElementById('speech-status').textContent = 'ERRO: ' + e.error.toUpperCase();
+                }
+            };
+
+            recognition.onend = () => {
+                if (isListening) recognition.start(); // Reinicia automaticamente
+            };
+
+            recognition.start();
+            setSpeechStatus(true);
+            document.getElementById('transcript-cursor').style.display = 'inline-block';
+            return recognition;
+        }
+
+        // ============================================================
+        // ANÁLISE EVP
+        // ============================================================
+        async function enviarParaAnalise() {
+            if (!isListening) return;
+
+            document.getElementById('ia-status').textContent = 'ANALISANDO...';
+            const dotIa = document.getElementById('ia-dot');
+            dotIa.classList.add('active');
+
+            const payload = {
+                transcricao: lastTranscript.trim().slice(-500), // últimos 500 chars
+                frequencias_anomalas: lastFreqsAnomalas,
+                nivel_audio: lastNivelAudio,
+                magnetico: 0,
+                frequencia_dominante: lastFreqDominante,
+                sessao_id: sessaoId,
+            };
+
+            // Limpar transcrição acumulada após envio
+            lastTranscript = '';
+            document.getElementById('transcript-text').innerHTML =
+                '<span class="transcript-interim"></span><span class="transcript-cursor"></span>';
+
+            try {
+                const resp = await fetch('/api/evp/analisar/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await resp.json();
+                if (data.status === 'registrado') {
+                    document.getElementById('ia-status').textContent = 'PROCESSANDO';
+                    // Mostrar card "em processamento"
+                    addLoadingCard(data.registro_id);
+                }
+            } catch (e) {
+                document.getElementById('ia-status').textContent = 'ERRO';
+                dotIa.classList.remove('active');
+            }
+        }
+
+        function addLoadingCard(registroId) {
+            const feed = document.getElementById('evp-feed');
+            const card = document.createElement('div');
+            card.className = 'evp-card';
+            card.id = `card-loading-${registroId}`;
+            card.innerHTML = `
+    <div class="card-loading">⟳ ENVIANDO PARA ANÁLISE IA... ID:${registroId}</div>
+  `;
+            feed.insertBefore(card, feed.firstChild);
+        }
+
+        // ============================================================
+        // POLLING — Buscar registros atualizados
+        // ============================================================
+        let lastRecordIds = new Set(
+            {% for r in ultimos_registros %}{ { r.id } }, {% endfor %}
+        -1
+);
+
+        async function pollRegistros() {
+            try {
+                const resp = await fetch('/api/evp/registros/');
+                const data = await resp.json();
+                const registros = data.registros;
+
+                // Stats
+                const totalAnom = registros.filter(r => r.e_anomalia).length;
+                document.getElementById('stat-anomalias').textContent = totalAnom;
+                document.getElementById('stat-total').textContent = registros.length;
+
+                // Novos registros
+                for (const r of registros) {
+                    if (lastRecordIds.has(r.id)) continue;
+                    lastRecordIds.add(r.id);
+
+                    // Remover card loading se existir
+                    const loadingCard = document.getElementById(`card-loading-${r.id}`);
+                    if (loadingCard) loadingCard.remove();
+
+                    // Criar card
+                    const card = buildCard(r);
+                    const feed = document.getElementById('evp-feed');
+                    const empty = feed.querySelector('[style*="AGUARDANDO"]');
+                    if (empty) empty.remove();
+                    feed.insertBefore(card, feed.firstChild);
+
+                    // Alerta crítico
+                    if (r.nota >= 7) {
+                        flashAnomalyRing();
+                        if (r.nota >= 8) showCriticalModal(r);
+                    }
+
+                    // Atualizar IA status
+                    document.getElementById('ia-status').textContent = 'ANALISADO';
+                    document.getElementById('ia-dot').classList.remove('active');
+                }
+            } catch (e) { }
+        }
+
+        function buildCard(r) {
+            const card = document.createElement('div');
+            let cls = 'evp-card';
+            if (r.e_anomalia) cls += ' anomalia';
+            if (r.classificacao_key === 'possivel_evp') cls += ' possivel';
+            if (r.classificacao_key === 'evp_confirmado') cls += ' evp_confirmado';
+            card.className = cls;
+
+            const notaCls = r.nota >= 8 ? 'nota-critica' : r.nota >= 6 ? 'nota-alta' : r.nota >= 4 ? 'nota-media' : 'nota-baixa';
+
+            let freqTags = '';
+            if (r.frequencias && r.frequencias.length > 0) {
+                freqTags = `<div class="card-freqs">
+      ${r.frequencias.slice(0, 5).map(f => `<span class="freq-tag">${Math.round(f)}Hz</span>`).join('')}
+    </div>`;
+            }
+
+            card.innerHTML = `
+    <div class="card-header">
+      <span class="card-time">${r.data}</span>
+      <span class="card-nota ${notaCls}">${r.nota}/10</span>
+    </div>
+    <div class="card-classificacao">◉ ${r.classificacao}</div>
+    ${r.transcricao ? `<div class="card-transcricao">"${r.transcricao.slice(0, 120)}"</div>` : ''}
+    ${r.mensagem ? `<div class="card-mensagem">↳ ${r.mensagem}</div>` : ''}
+    ${freqTags}
+    <div class="card-analise">${r.analise || ''}</div>
+  `;
+            return card;
+        }
+
+        // ============================================================
+        // UI HELPERS
+        // ============================================================
+        function flashAnomalyRing() {
+            const ring = document.getElementById('anomaly-ring');
+            ring.classList.add('show');
+            setTimeout(() => ring.classList.remove('show'), 800);
+        }
+
+        function showCriticalModal(r) {
+            document.getElementById('critical-body').innerHTML =
+                `<strong style="color:var(--yellow)">${r.classificacao}</strong><br>
+    ${r.mensagem ? `"${r.mensagem}"<br>` : ''}
+    Nota Paranormal: <strong style="color:var(--red-alert)">${r.nota}/10</strong><br><br>
+    <span style="font-size:10px;color:rgba(0,255,65,0.6)">${(r.analise || '').slice(0, 200)}...</span>`;
+            const modal = document.getElementById('critical-modal');
+            modal.classList.add('show');
+            setTimeout(() => modal.classList.remove('show'), 8000);
+        }
+
+        function setMicStatus(on) {
+            const dot = document.getElementById('mic-dot');
+            const txt = document.getElementById('mic-status');
+            if (on) { dot.classList.add('active'); txt.textContent = 'ATIVO'; }
+            else { dot.classList.remove('active'); txt.textContent = 'OFFLINE'; }
+        }
+
+        function setSpeechStatus(on) {
+            const dot = document.getElementById('speech-dot');
+            const txt = document.getElementById('speech-status');
+            if (on) { dot.classList.add('active'); txt.textContent = 'OUVINDO'; }
+            else { dot.classList.remove('active'); txt.textContent = 'PAUSADO'; }
+        }
+
+        function startSessionTimer() {
+            sessionStartTime = Date.now();
+            sessionTimerInterval = setInterval(() => {
+                const elapsed = Date.now() - sessionStartTime;
+                const h = Math.floor(elapsed / 3600000).toString().padStart(2, '0');
+                const m = Math.floor((elapsed % 3600000) / 60000).toString().padStart(2, '0');
+                const s = Math.floor((elapsed % 60000) / 1000).toString().padStart(2, '0');
+                document.getElementById('session-timer').textContent = `TEMPO: ${h}:${m}:${s}`;
+            }, 1000);
+        }
+
+        // ============================================================
+        // BOTÕES
+        // ============================================================
+        document.getElementById('btn-start').addEventListener('click', async () => {
+            if (isListening) return;
+
+            // Iniciar sessão EVP
+            if (!sessaoId) await iniciarSessaoEvp();
+
+            const audioOk = await iniciarAudio();
+            if (!audioOk) return;
+
+            iniciarSpeech();
+            isListening = true;
+            startSessionTimer();
+
+            document.getElementById('btn-start').classList.add('active');
+            document.getElementById('btn-stop').disabled = false;
+            document.getElementById('btn-analyze').disabled = false;
+
+            // Auto-analisar a cada intervalo
+            autoAnalyzeTimer = setInterval(enviarParaAnalise, AUTO_ANALYZE_INTERVAL);
+        });
+
+        document.getElementById('btn-stop').addEventListener('click', () => {
+            isListening = false;
+            if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
+            if (analyser) { cancelAnimationFrame(animFrame); analyser = null; }
+            if (recognition) recognition.stop();
+            if (audioCtx) { audioCtx.close(); audioCtx = null; }
+            if (autoAnalyzeTimer) clearInterval(autoAnalyzeTimer);
+            if (sessionTimerInterval) clearInterval(sessionTimerInterval);
+
+            setMicStatus(false);
+            setSpeechStatus(false);
+            document.getElementById('ia-status').textContent = 'STANDBY';
+            document.getElementById('btn-start').classList.remove('active');
+            document.getElementById('btn-stop').disabled = true;
+            document.getElementById('btn-analyze').disabled = true;
+
+            // Limpar canvas
+            const W = canvas.width, H = canvas.height;
+            ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+            ctx.fillStyle = 'rgba(0,255,65,0.3)';
+            ctx.font = '14px Share Tech Mono';
+            ctx.textAlign = 'center';
+            ctx.fillText('[ ESCUTA ENCERRADA ]', W / 2, H / 2);
+        });
+
+        document.getElementById('btn-analyze').addEventListener('click', enviarParaAnalise);
+
+        document.getElementById('btn-clear').addEventListener('click', () => {
+            if (confirm('Limpar feed? Os registros no banco serão mantidos.')) {
+                document.getElementById('evp-feed').innerHTML =
+                    '<div style="color:var(--green-dim);font-size:11px;letter-spacing:1px;text-align:center;padding:20px;">[ FEED LIMPO ]</div>';
+                lastTranscript = '';
+                document.getElementById('transcript-text').innerHTML =
+                    '<span class="transcript-interim">Aguardando...</span>';
+            }
+        });
+
+        // ============================================================
+        // POLLING LOOP
+        // ============================================================
+        setInterval(pollRegistros, POLL_INTERVAL);
+
+        // Fix typo no btn-stop listener
+        document.getElementById('btn-stop').addEventListener('click', () => {
+            document.getElementById('ia-status').textContent = 'STANDBY';
+        }, true);
+    </script>
+</body>
+
+</html>

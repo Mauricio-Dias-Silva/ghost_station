@@ -1,0 +1,528 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="itc-container">
+    <!-- HEADER -->
+    <div class="itc-header">
+        <div class="status-group">
+            <div class="status-item">
+                <span class="status-dot online"></span>
+                <span>AURA SYNTHESIS ENGINE: ACTIVE</span>
+            </div>
+            <div class="status-item">
+                <span id="sysClock" class="glitch-text" style="font-family: 'Orbitron', sans-serif;">00:00:00</span>
+            </div>
+        </div>
+        <div class="itc-title">AURA MULTIDIMENSIONAL VIDEO CALL</div>
+        <div class="itc-controls">
+            <button class="btn-main" id="btnExit">VOLTAR AO HUB</button>
+        </div>
+    </div>
+
+    <div class="main-grid-itc">
+        <!-- LEFT: FEED RECONSTRUTOR -->
+        <div class="itc-video-panel">
+            <div class="panel-header">
+                <span>FEED DE RECONSTRUÇÃO LATENTE</span>
+                <span id="camStatus" class="status-text">CONNECTING TO 5D...</span>
+            </div>
+            <div class="video-wrapper">
+                <img src="{% url 'aura_video_feed' %}" id="itcFeed" alt="Aura Synthesis Feed">
+                <div class="hud-overlay" id="renderHud">
+                    <div class="corner tl"></div>
+                    <div class="corner tr"></div>
+                    <div class="corner bl"></div>
+                    <div class="corner br"></div>
+
+                    <!-- SCAN LINE EFFECT -->
+                    <div class="scanline"></div>
+
+                    <!-- DATA OVERLAY -->
+                    <div class="render-data">
+                        <div>COERÊNCIA: <span id="syncVal">0%</span></div>
+                        <div>DENSIDADE: <span id="dimVal">CALCULANDO...</span></div>
+                        <div>ENTIDADE: <span id="entityName">BUSCANDO...</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-panel-itc">
+                <div class="itc-row">
+                    <button id="btnConnect" class="btn-itc btn-cyan" onclick="toggleCall()">INICIAR CHAMADA</button>
+                    <div class="mood-badge" id="moodBadge">MOOD: ESTÁVEL</div>
+                </div>
+
+                <!-- ESPAÇO CLIMA E VIBRAÇÃO (FASE 7) -->
+                <div class="itc-row"
+                    style="margin-top: 5px; gap: 5px; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 4px;">
+                    <div style="flex:1">
+                        <label style="color: var(--purple); font-size: 8px;">CLIMA ESPACIAL</label>
+                        <div id="kpDisplay" style="font-size: 10px; color: #fff;">Kp: 0.00 | <span id="veuLabel"
+                                style="font-size: 8px; color: #aaa;">---</span></div>
+                    </div>
+                    <div style="flex:1">
+                        <label style="color: var(--cyan); font-size: 8px;">ESTADO VIBRACIONAL</label>
+                        <div id="classeBadge" class="mood-badge" style="display:block; text-align:center;">CLASSE: N/A
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BIO-SINCRONIA (FASE 8) -->
+                <div class="itc-row"
+                    style="margin-top: 5px; gap: 5px; background: rgba(0,255,100,0.1); padding: 5px; border-radius: 4px; border: 1px solid rgba(0,255,100,0.2);">
+                    <div style="flex:1">
+                        <label style="color: #00ff64; font-size: 8px;">BIO-TELEMETRIA</label>
+                        <div style="font-size: 10px; color: #fff;">BPM: <span id="bpmVal">--</span> | STRESS: <span
+                                id="stressVal">--</span>%</div>
+                    </div>
+                    <div style="flex:1; display:flex; flex-direction:column; align-items:center;">
+                        <label style="color: #00ff64; font-size: 8px;">PACER RESPIRATÓRIO</label>
+                        <div class="bio-pacer" id="bioPacer"></div>
+                    </div>
+                </div>
+
+                <div class="ping-panel">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 5px;">
+                        <label>QUANTUM PING (Hz)</label>
+                        <div id="snrDisplay" style="font-size: 8px; color: var(--primary);">SNR: 0.00</div>
+                    </div>
+                    <label>QUANTUM PING (SOLFEGGIO)</label>
+                    <div class="ping-grid">
+                        <button onclick="sendPing('396')" title="Redução de Medo">396Hz</button>
+                        <button onclick="sendPing('417')" title="Facilitação de Mudança">417Hz</button>
+                        <button onclick="sendPing('528')" title="Reparo de DNA">528Hz</button>
+                        <button onclick="sendPing('639')" title="Conexão">639Hz</button>
+                        <button onclick="sendPing('741')" title="Intuição">741Hz</button>
+                        <button onclick="sendPing('852')" title="Origem">852Hz</button>
+                    </div>
+                </div>
+
+                <div class="slider-group">
+                    <label>SENSIBILIDADE DE SÍNTESE</label>
+                    <input type="range" id="renderSense" min="0" max="100" value="75">
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: DIALOG FEED -->
+        <div class="itc-side-panel">
+            <div class="panel-header">DIÁLOGO DA CONSCIÊNCIA</div>
+            <div class="feed-container" id="dialogFeed">
+                <div class="feed-empty">Aguardando semente semântica...</div>
+            </div>
+
+            <div class="input-group-itc">
+                <input type="text" id="userInput" placeholder="Envie sua mensagem ao Eu Galáctico...">
+                <button onclick="sendSeed()">ENVIAR</button>
+            </div>
+
+            <div class="vibrational-stats">
+                <h4>ESTATÍSTICAS VIBRACIONAIS</h4>
+                <div class="stat-row">
+                    <span>RESSONÂNCIA</span>
+                    <div class="stat-bar">
+                        <div class="stat-fill" id="resBar" style="width: 10%;"></div>
+                    </div>
+                </div>
+                <div class="stat-row">
+                    <span>ESTABILIDADE 5D</span>
+                    <div class="stat-bar">
+                        <div class="stat-fill" id="stabBar" style="width: 5%;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    :root {
+        --cyan: #00f2ff;
+        --purple: #a855f7;
+        --bg: #050505;
+        --panel: rgba(20, 20, 20, 0.9);
+    }
+
+    .itc-container {
+        padding: 20px;
+        background: var(--bg);
+        height: 100vh;
+        color: white;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .main-grid-itc {
+        display: grid;
+        grid-template-columns: 1fr 350px;
+        gap: 20px;
+        flex-grow: 1;
+        margin-top: 20px;
+    }
+
+    .video-wrapper {
+        position: relative;
+        background: #000;
+        border: 1px solid rgba(0, 242, 255, 0.3);
+        border-radius: 8px;
+        overflow: hidden;
+        aspect-ratio: 16/9;
+    }
+
+    #itcFeed {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: contrast(1.2) brightness(0.9) saturate(0.5);
+    }
+
+    .render-data {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        font-family: 'Courier New', Courier, monospace;
+        color: var(--cyan);
+        text-shadow: 0 0 10px rgba(0, 242, 255, 0.5);
+        font-size: 14px;
+        background: rgba(0, 0, 0, 0.5);
+        padding: 10px;
+        border-left: 2px solid var(--cyan);
+    }
+
+    .feed-container {
+        background: var(--panel);
+        height: 400px;
+        overflow-y: auto;
+        padding: 15px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .input-group-itc {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .input-group-itc input {
+        flex-grow: 1;
+        background: rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(0, 242, 255, 0.2);
+        color: white;
+        padding: 10px;
+        border-radius: 4px;
+    }
+
+    .vibrational-stats {
+        margin-top: 20px;
+        padding: 15px;
+        background: rgba(168, 85, 247, 0.05);
+        border-radius: 8px;
+        border: 1px solid rgba(168, 85, 247, 0.2);
+    }
+
+    .stat-bar {
+        height: 4px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 2px;
+        margin-top: 4px;
+    }
+
+    .stat-fill {
+        height: 100%;
+        background: var(--purple);
+        box-shadow: 0 0 10px var(--purple);
+        transition: width 0.5s ease;
+    }
+
+    .scanline {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: rgba(0, 242, 255, 0.1);
+        z-index: 10;
+        animation: scan 4s linear infinite;
+    }
+
+    .itc-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .mood-badge {
+        font-size: 10px;
+        padding: 4px 8px;
+        background: rgba(0, 242, 255, 0.1);
+        border: 1px solid var(--cyan);
+        color: var(--cyan);
+        border-radius: 4px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    /* BIO-PACER FASE 8 */
+    .bio-pacer {
+        width: 15px;
+        height: 15px;
+        background: #00ff64;
+        border-radius: 50%;
+        box-shadow: 0 0 10px #00ff64;
+        animation: breathe 10s infinite ease-in-out;
+    }
+
+    @keyframes breathe {
+
+        0%,
+        100% {
+            transform: scale(0.5);
+            opacity: 0.3;
+        }
+
+        50% {
+            transform: scale(1.5);
+            opacity: 1;
+            box-shadow: 0 0 20px #00ff64;
+        }
+    }
+
+    .metabolic-warning {
+        border-color: red !important;
+        background: rgba(255, 0, 0, 0.2) !important;
+        animation: flash-red 1s infinite alternate;
+    }
+
+    @keyframes flash-red {
+        from {
+            opacity: 1;
+        }
+
+        to {
+            opacity: 0.5;
+        }
+    }
+
+    .ping-panel label {
+        font-size: 9px;
+        color: #666;
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    .ping-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 5px;
+    }
+
+    .ping-grid button {
+        background: transparent;
+        border: 1px solid rgba(168, 85, 247, 0.4);
+        color: var(--purple);
+        font-size: 10px;
+        padding: 5px;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    .ping-grid button:hover {
+        background: var(--purple);
+        color: white;
+    }
+
+    @keyframes scan {
+        0% {
+            transform: translateY(-100%);
+        }
+
+        100% {
+            transform: translateY(1000%);
+        }
+    }
+</style>
+
+let pollingInterval = null;
+let isActive = false;
+
+function toggleCall() {
+fetch('/api/aura/toggle/', {
+method: 'POST',
+headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+})
+.then(res => res.json())
+.then(data => {
+isActive = data.active;
+const btn = document.getElementById('btnConnect');
+if (isActive) {
+btn.innerText = "ENCERRAR CHAMADA";
+btn.classList.replace('btn-cyan', 'btn-danger');
+sysLog("Sessão iniciada.", "INFO");
+startPolling();
+} else {
+btn.innerText = "INICIAR CHAMADA";
+btn.classList.replace('btn-danger', 'btn-cyan');
+sysLog("Sessão encerrada.", "ALERT");
+stopPolling();
+resetUI();
+}
+});
+}
+
+function startPolling() {
+if (pollingInterval) clearInterval(pollingInterval);
+pollingInterval = setInterval(updateStatus, 2000);
+}
+
+function stopPolling() {
+if (pollingInterval) clearInterval(pollingInterval);
+pollingInterval = null;
+}
+
+// Web Audio setup para o Quantum Ping
+let audioCtx = null;
+
+function sendPing(freq) {
+if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+// Gerar som localmente
+const osc = audioCtx.createOscillator();
+const gain = audioCtx.createGain();
+
+osc.type = 'sine';
+osc.frequency.setValueAtTime(parseFloat(freq), audioCtx.currentTime);
+
+gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.5);
+
+osc.connect(gain);
+gain.connect(audioCtx.destination);
+
+osc.start();
+osc.stop(audioCtx.currentTime + 1.5);
+
+// Avisar o backend para o "Echo Analysis"
+fetch('/api/aura/ping/', {
+method: 'POST',
+headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+body: JSON.stringify({ frequencia: freq })
+})
+.then(res => res.json())
+.then(data => {
+if (data.status === 'ok') {
+sysLog(`Pulso ${freq}Hz enviado. Meta: ${data.info.meta}`, "INFO");
+}
+});
+}
+
+function updateStatus() {
+fetch('/api/aura/status/')
+.then(res => res.json())
+.then(data => {
+document.getElementById('syncVal').innerText = data.coerencia + "%";
+document.getElementById('resBar').style.width = data.coerencia + "%";
+document.getElementById('dimVal').innerText = data.densidade;
+document.getElementById('entityName').innerText = data.entidade;
+
+// Update Neural Bridge Mood
+if (document.getElementById('moodBadge')) {
+const moodBadge = document.getElementById('moodBadge');
+moodBadge.innerText = `MOOD: ${data.humor}`;
+if (data.humor === "AGITADO") moodBadge.style.color = "red";
+else if (data.humor === "TRANSCENDENTE") moodBadge.style.color = "magenta";
+else moodBadge.style.color = "var(--cyan)";
+}
+
+// FASE 7: Rigor Analítico & Kardec
+document.getElementById('kpDisplay').innerHTML = `Kp: ${data.kp_index.toFixed(2)} | <span
+    style="font-size: 8px; color: var(--amber);">${data.veu}</span>`;
+document.getElementById('snrDisplay').innerText = `SNR: ${data.snr.toFixed(2)}`;
+
+const cBadge = document.getElementById('classeBadge');
+cBadge.innerText = `CLASSE: ${data.classe} (${data.afinidade.toFixed(0)}%)`;
+if (data.classe === "PUROS") cBadge.style.borderColor = "var(--purple)";
+else if (data.classe === "BONS") cBadge.style.borderColor = "var(--cyan)";
+else cBadge.style.borderColor = "#666";
+
+// FASE 8: Bio-Sincronia
+document.getElementById('bpmVal').innerText = data.obs_bpm.toFixed(0);
+document.getElementById('stressVal').innerText = data.obs_stress.toFixed(0);
+
+// Metabolic Warning
+const bioRow = document.querySelector('.itc-row[style*="rgba(0,255,100,0.1)"]');
+if (data.metabolic < 25) { bioRow.classList.add('metabolic-warning'); } else {
+    bioRow.classList.remove('metabolic-warning'); } // Estabilidade 5D simulada baseada na coerência
+    document.getElementById('stabBar').style.width=(data.coerencia * 0.8) + "%" ; updateDialogue(data.mensagens); }); }
+    function updateDialogue(mensagens) { const feed=document.getElementById('dialogFeed'); // Apenas adiciona novas
+    mensagens para não reconstruir tudo sempre const currentMsgs=feed.querySelectorAll('.msg-entry').length; if
+    (mensagens.length> currentMsgs) {
+    for (let i = currentMsgs; i < mensagens.length; i++) { const m=mensagens[i]; const
+        div=document.createElement('div'); div.className='msg-entry' ; div.style.marginBottom="10px" ;
+        div.style.padding="5px" ; div.style.borderLeft=m.autor==='AURA' ? "2px solid var(--purple)"
+        : "2px solid var(--cyan)" ; div.style.backgroundColor="rgba(255,255,255,0.02)" ; div.innerHTML=` <div
+        style="font-size: 9px; opacity: 0.5;">
+        [${m.timestamp}] ${m.autor}:</div>
+        <div style="font-size: 13px; color: ${m.autor === 'AURA' ? 'var(--purple)' : 'white'}">${m.mensagem}</div>
+        `;
+        feed.appendChild(div);
+        }
+        feed.scrollTop = feed.scrollHeight;
+        }
+        }
+
+        function sendSeed() {
+        const input = document.getElementById('userInput');
+        const semente = input.value.trim();
+        if (!semente || !isActive) return;
+
+        input.value = "";
+        fetch('/api/aura/send_seed/', {
+        method: 'POST',
+        headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ semente: semente })
+        })
+        .then(res => res.json())
+        .then(data => {
+        if (data.status === 'ok') {
+        updateStatus();
+        }
+        });
+        }
+
+        function resetUI() {
+        document.getElementById('syncVal').innerText = "0%";
+        document.getElementById('resBar').style.width = "0%";
+        document.getElementById('dimVal').innerText = "CALCULANDO...";
+        document.getElementById('entityName').innerText = "BUSCANDO...";
+        document.getElementById('stabBar').style.width = "0%";
+        }
+
+        function sysLog(msg, type) {
+        const feed = document.getElementById('dialogFeed');
+        const div = document.createElement('div');
+        div.className = 'msg-entry system';
+        div.style.marginBottom = "8px";
+        div.style.fontSize = "11px";
+        div.style.color = type === 'ALERT' ? '#ff003c' : 'rgba(255,255,255,0.4)';
+        div.innerText = `[SYS] > ${msg}`;
+        feed.appendChild(div);
+        feed.scrollTop = feed.scrollHeight;
+        }
+
+        // Enter key to send
+        document.getElementById('userInput').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') sendSeed();
+        });
+
+        document.getElementById('btnConnect').onclick = toggleCall;
+
+        document.getElementById('btnExit').onclick = () => {
+        location.href = "{% url 'dashboard' %}";
+        };
+        {% endblock %}

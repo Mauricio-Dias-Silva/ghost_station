@@ -1,0 +1,566 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    /* ==========================================
+       ITC CONSOLE - THEME (Cyberpunk / Ghost Hunter)
+       ========================================== */
+    body {
+        background-color: #050505;
+        color: #e0e0e0;
+        font-family: 'Rajdhani', 'Share Tech Mono', monospace;
+        margin: 0;
+        overflow-x: hidden;
+    }
+
+    .evp-container {
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 20px;
+        padding: 20px;
+        height: calc(100vh - 80px);
+        /* Discount navbar if exists */
+        max-width: 1800px;
+        margin: 0 auto;
+    }
+
+    /* HEADER */
+    .evp-header {
+        grid-column: 1 / -1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid #00ff41;
+        padding-bottom: 10px;
+        margin-bottom: 10px;
+    }
+
+    .evp-header h2 {
+        margin: 0;
+        color: #00ff41;
+        font-size: 28px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        text-shadow: 0 0 10px rgba(0, 255, 65, 0.4);
+    }
+
+    .status-badge {
+        padding: 5px 15px;
+        border-radius: 4px;
+        font-weight: bold;
+        font-size: 14px;
+        background: rgba(0, 255, 65, 0.1);
+        border: 1px solid #00ff41;
+        color: #00ff41;
+        animation: pulse 2s infinite;
+    }
+
+    /* PANELS */
+    .panel {
+        background: #111;
+        border: 1px solid #333;
+        border-radius: 8px;
+        padding: 15px;
+        box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .panel-title {
+        color: #888;
+        font-size: 14px;
+        text-transform: uppercase;
+        margin-top: 0;
+        margin-bottom: 15px;
+        border-bottom: 1px solid #333;
+        padding-bottom: 5px;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    /* VIDEO FEED */
+    .video-container {
+        position: relative;
+        flex-grow: 1;
+        background: #000;
+        border-radius: 4px;
+        overflow: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border: 1px solid #444;
+    }
+
+    .video-feed {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        filter: contrast(1.2);
+    }
+
+    .scanline {
+        position: absolute;
+        width: 100%;
+        height: 10px;
+        background: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0));
+        opacity: 0.1;
+        animation: scanline 6s linear infinite;
+        pointer-events: none;
+    }
+
+    /* METER */
+    .meter-container {
+        margin-top: 15px;
+        background: #0a0a0a;
+        padding: 10px;
+        border-radius: 4px;
+        border: 1px solid #222;
+    }
+
+    .meter-bar-bg {
+        height: 20px;
+        background: #222;
+        border-radius: 2px;
+        overflow: hidden;
+        margin-top: 5px;
+        position: relative;
+    }
+
+    .meter-bar-fill {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, #00ff41, #ffbf00, #ff003c);
+        transition: width 0.2s ease;
+    }
+
+    .meter-threshold {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #ff003c;
+        left: 70%;
+        /* Trigger threshold */
+        z-index: 10;
+        box-shadow: 0 0 5px #ff003c;
+    }
+
+    /* FEED */
+    .feed-container {
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+        overflow-y: auto;
+        gap: 15px;
+        padding-right: 5px;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: #111;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: #00ff41;
+        border-radius: 3px;
+    }
+
+    .feed-card {
+        background: #1a1a1a;
+        border-left: 4px solid #555;
+        padding: 12px;
+        border-radius: 4px;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        animation: slideIn 0.3s ease-out;
+    }
+
+    .feed-card.anomaly {
+        border-left-color: #ff003c;
+        background: rgba(255, 0, 60, 0.05);
+        box-shadow: 0 0 10px rgba(255, 0, 60, 0.2);
+    }
+
+    .feed-card.pareidolia {
+        border-left-color: #00c3ff;
+        background: rgba(0, 195, 255, 0.05);
+        box-shadow: 0 0 10px rgba(0, 195, 255, 0.2);
+    }
+
+    .feed-card.galactic {
+        border-left: 6px solid var(--purple) !important;
+        background: rgba(168, 85, 247, 0.1);
+        box-shadow: 0 0 15px rgba(168, 85, 247, 0.3);
+        border-radius: 4px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .feed-card.galactic::after {
+        content: 'GALACTIC SIGNATURE';
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        font-size: 8px;
+        color: var(--purple);
+        letter-spacing: 1px;
+        font-weight: bold;
+    }
+
+    .feed-img {
+        width: 100%;
+        border-radius: 4px;
+        margin-bottom: 8px;
+        border: 1px solid #333;
+    }
+
+    .feed-meta {
+        display: flex;
+        justify-content: space-between;
+        color: #888;
+        font-size: 12px;
+        margin-bottom: 5px;
+    }
+
+    .feed-meta span.tag {
+        color: #fff;
+        padding: 2px 6px;
+        border-radius: 3px;
+        background: #333;
+        font-weight: bold;
+    }
+
+    .feed-card.pareidolia .tag {
+        background: #00c3ff;
+        color: #000;
+    }
+
+    .feed-card.anomaly .tag {
+        background: #ff003c;
+        color: #fff;
+    }
+
+    .feed-text {
+        color: #e0e0e0;
+        line-height: 1.4;
+    }
+
+    /* CONTROLS */
+    .controls {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .btn {
+        flex: 1;
+        padding: 10px;
+        border: none;
+        border-radius: 4px;
+        font-family: inherit;
+        font-weight: bold;
+        cursor: pointer;
+        text-transform: uppercase;
+        transition: all 0.2s;
+    }
+
+    .btn-analyze {
+        background: #00ff41;
+        color: #000;
+    }
+
+    .btn-analyze:hover {
+        background: #00cc33;
+        box-shadow: 0 0 15px rgba(0, 255, 65, 0.5);
+    }
+
+    .btn-analyze:disabled {
+        background: #333;
+        color: #666;
+        cursor: not-allowed;
+        box-shadow: none;
+    }
+
+    .btn-auto {
+        background: #333;
+        color: #fff;
+        border: 1px solid #555;
+    }
+
+    .btn-auto.active {
+        background: rgba(0, 195, 255, 0.2);
+        border-color: #00c3ff;
+        color: #00c3ff;
+        box-shadow: 0 0 10px rgba(0, 195, 255, 0.3);
+    }
+
+    /* ANIMATIONS */
+    @keyframes scanline {
+        0% {
+            top: 0;
+        }
+
+        100% {
+            top: 100%;
+        }
+    }
+
+    @keyframes pulse {
+        0% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.6;
+        }
+
+        100% {
+            opacity: 1;
+        }
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 992px) {
+        .evp-container {
+            grid-template-columns: 1fr;
+            height: auto;
+        }
+
+        .panel {
+            min-height: 400px;
+        }
+    }
+</style>
+
+<div class="evp-container">
+    <div class="evp-header">
+        <h2>👁️ ITC VISUAL CONSOLE</h2>
+        <div class="status-badge" id="conn-status">Aguardando Câmera...</div>
+    </div>
+
+    <!-- ESQUERDA: CÂMERA E SCANNERS -->
+    <div class="panel">
+        <div class="panel-title">
+            <span>🔴 Lente de Isolamento Térmico/Visual (Ao Vivo)</span>
+        </div>
+
+        <div class="video-container">
+            <!-- Streaming MJPEG backend -->
+            <img src="/itc_video_feed/" class="video-feed" id="itc-video" alt="ITC Video Feed"
+                onerror="this.src=''; this.alt='Câmera Desconectada ou Link Inválido';">
+            <div class="scanline"></div>
+        </div>
+
+        <div class="meter-container">
+            <div style="display: flex; justify-content: space-between; font-size: 12px; color: #aaa;">
+                <span>Distorção Pixelar / Motion Score</span>
+                <span id="motion-val">0 / 100</span>
+            </div>
+            <div class="meter-bar-bg">
+                <div class="meter-threshold" title="Gatilho IA (70%)"></div>
+                <div class="meter-bar-fill" id="motion-bar"></div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-auto" id="btn-auto-trigger" onclick="toggleAutoTrigger()">
+                ⚡ Auto-Analyze (Motion)
+            </button>
+            <button class="btn btn-analyze" id="btn-analyze" onclick="forceAnalysis()">
+                📷 Forçar Análise IA
+            </button>
+        </div>
+    </div>
+
+    <!-- DIREITA: FEED DA IA -->
+    <div class="panel">
+        <div class="panel-title">
+            <span>🧠 Decodificação Pareidólica (Gemini Vision)</span>
+            <span id="feed-counter">0 Registros</span>
+        </div>
+
+        <div class="feed-container" id="ai-feed">
+            <div style="text-align: center; color: #555; margin-top: 50px; font-style: italic;">
+                Nenhuma anomalia detectada nesta sessão.
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const motionBar = document.getElementById('motion-bar');
+    const motionVal = document.getElementById('motion-val');
+    const btnAnalyze = document.getElementById('btn-analyze');
+    const btnAuto = document.getElementById('btn-auto-trigger');
+    const feed = document.getElementById('ai-feed');
+    const statusBadge = document.getElementById('conn-status');
+
+    let isAnalyzing = false;
+    let autoTrigger = false;
+    let feedCount = 0;
+
+    // Simulate Motion Score polling (since backend video stream doesn't push data, we poll the API or simulate for visual effect based on manual triggers)
+    // To get real motion score synchronously without hitting the heavy AI API, we would need a separate lightweight endpoint.
+    // Let's create a lightweight polling just for status/motion if needed, or we rely on the analysis return.
+    // For now, let's just allow manual clicking and auto polling of the API periodically.
+
+    function toggleAutoTrigger() {
+        autoTrigger = !autoTrigger;
+        if (autoTrigger) {
+            btnAuto.classList.add('active');
+            btnAuto.innerText = "⚡ Auto-Analyze (ON)";
+            runAutoLoop();
+        } else {
+            btnAuto.classList.remove('active');
+            btnAuto.innerText = "⚡ Auto-Analyze (OFF)";
+        }
+    }
+
+    async function runAutoLoop() {
+        if (!autoTrigger) return;
+
+        if (!isAnalyzing) {
+            await forceAnalysis(true);
+        }
+
+        // Wait between polls to not spam the API. If auto is on, it checks every 3 seconds.
+        setTimeout(runAutoLoop, 3000);
+    }
+
+    async function forceAnalysis(isAuto = false) {
+        if (isAnalyzing) return;
+
+        isAnalyzing = true;
+        btnAnalyze.disabled = true;
+        btnAnalyze.innerText = "⚙️ Processando IA...";
+
+        if (!isAuto) {
+            statusBadge.innerText = "Capturando Frame...";
+            statusBadge.style.color = "#ffbf00";
+            statusBadge.style.borderColor = "#ffbf00";
+        }
+
+        try {
+            const response = await fetch('/api/itc/analisar/', {
+                method: 'POST',
+                headers: { 'X-CSRFToken': getCookie('csrftoken') }
+            });
+            const data = await response.json();
+
+            if (data.status === 'sucesso') {
+                statusBadge.innerText = "Câmera Ativa";
+                statusBadge.style.color = "#00ff41";
+                statusBadge.style.borderColor = "#00ff41";
+
+                // Update Motion Bar based on the captured frame's score
+                let score = data.motion_score || 0;
+                let pct = Math.min(score, 100);
+                motionBar.style.width = pct + '%';
+                motionVal.innerText = score + ' / 100';
+
+                // Display in feed if there's interesting data
+                if (data.salvo || (!isAuto && data.analise)) {
+                    addFeedItem(data);
+                }
+
+            } else {
+                statusBadge.innerText = "Erro: " + data.msg;
+                statusBadge.style.color = "#ff003c";
+            }
+        } catch (e) {
+            console.error(e);
+            statusBadge.innerText = "Erro de Conexão";
+        } finally {
+            isAnalyzing = false;
+            btnAnalyze.disabled = false;
+            btnAnalyze.innerText = "📷 Forçar Análise IA";
+        }
+    }
+
+    function addFeedItem(data) {
+        if (feedCount === 0) feed.innerHTML = ''; // Clear empty message
+
+        const a = data.resultado || data.analise;
+        const fusao = data.fusao;
+        const isPareidolia = a.pareidolia_detectada;
+        const isHighConf = a.confianca >= 60;
+        const isGalactic = fusao && (fusao.origem.includes('GALÁCTICA') || fusao.origem.includes('INTERDIMENSIONAL'));
+
+        let cardClass = 'feed-card';
+        if (isGalactic) cardClass += ' galactic';
+        else if (isPareidolia) cardClass += ' pareidolia';
+        else if (isHighConf) cardClass += ' anomaly';
+
+        let tag = isGalactic ? "GALÁCTICO" : (isPareidolia ? "PAREIDOLIA" : (isHighConf ? "ANOMALIA" : "VERIFICADO"));
+        const time = new Date().toLocaleTimeString('pt-BR');
+
+        let imgHtml = '';
+        if (data.imagem_url || data.evidencia_url) {
+            imgHtml = `<img src="${data.imagem_url || data.evidencia_url}" class="feed-img" alt="Captured Frame">`;
+        }
+
+        let fusaoHtml = '';
+        if (fusao && fusao.sincronia) {
+            fusaoHtml = `
+                <div style="border-top:1px solid rgba(255,255,255,0.1); margin-top:8px; padding-top:4px; font-size:11px; color:var(--cyan);">
+                    ⚡ SINCRONIA DETECTADA: ${fusao.origem}<br>
+                    <small>Coerência Aura Core: ${fusao.coerencia.toFixed(1)}%</small>
+                </div>
+            `;
+        }
+
+        const html = `
+            <div class="${cardClass}">
+                <div class="feed-meta">
+                    <span class="tag">${tag}</span>
+                    <span>${time} | ${a.dimensao_estimada || '3D'}</span>
+                </div>
+                ${imgHtml}
+                <div class="feed-text">
+                    <strong style="color: ${isGalactic ? 'var(--purple)' : 'inherit'}">${a.classificacao}</strong><br>
+                    ${a.decodificacao}
+                    ${fusaoHtml}
+                </div>
+            </div>
+        `;
+
+        feed.insertAdjacentHTML('afterbegin', html);
+        feedCount++;
+        document.getElementById('feed-counter').innerText = `${feedCount} Registros`;
+    }
+
+    // Utility: get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+{% endblock %}
