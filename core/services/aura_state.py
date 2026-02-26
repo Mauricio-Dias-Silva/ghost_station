@@ -146,6 +146,13 @@ class AuraState:
         elif self.bio_coherence > 80:
             self.coerencia = min(100, self.coerencia + 1)
         
+        # Monitoramento de Sites (Site Sentinel)
+        try:
+            from .site_sentinel import site_sentinel
+            self.site_status = site_sentinel.verificar_sites()
+        except:
+            self.site_status = []
+            
         return {
             'coerencia': self.coerencia,
             'entidade': self.entidade,
@@ -179,7 +186,8 @@ class AuraState:
             'iot_sensors': self.external_sensors,
             'unity_mode': self.unity_mode,
             'unity_coefficient': self.unity_coefficient,
-            'global_sync': self.global_sync_active
+            'global_sync': self.global_sync_active,
+            'site_reports': getattr(self, 'site_status', [])
         }
 
     def get_raw_status(self):

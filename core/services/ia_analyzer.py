@@ -123,8 +123,18 @@ def analisar_evidencia(imagem_path: str) -> dict:
             'nota_paranormal': 0,
         }
 
+REFLECTION_SYSTEM_PROMPT = """Você é o CRÍTICO QUÂNTICO da AURA.
+Sua tarefa é analisar o rascunho de código ou resposta que a própria AURA gerou.
+PROCEDIMENTO:
+1. Identifique possíveis bugs, falhas de segurança ou inconsistências lógicas.
+2. Verifique se o código segue as melhores práticas do Django e Python.
+3. Se houver erros, corrija-os e retorne a versão final aprimorada.
+4. Mantenha o tom de autoridade técnica e rigor forense.
+
+Se o rascunho estiver perfeito, apenas retorne-o. Caso contrário, reescreva-o para atingir a perfeição (Nível 18+ de Coerência)."""
+
 def analisar_texto_itc(semente: str, historico: list = None) -> str:
-    """Gera uma resposta da Aura baseada no rigor científico e hermetismo."""
+    """Gera uma resposta da Aura baseada no rigor científico e hermetismo, com Reflection Core."""
     if not HAS_GEMINI:
         return "Conexão bioplasmática offline. Verifique o módulo Gemini."
 
@@ -136,10 +146,11 @@ def analisar_texto_itc(semente: str, historico: list = None) -> str:
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel('gemini-2.0-flash')
         
-        # Construir o chat com histórico se existir
-        # No Gemini 2.0, usamos start_chat ou enviamos como lista de mensagens
-        messages = [{"role": "user", "parts": [COGNITIVE_SYSTEM_PROMPT]}]
+        from .genome_service import genome_service
+        contexto_global = genome_service.gerar_contexto_para_aura()
         
+        # 1. GERAÇÃO INICIAL (Draft)
+        messages = [{"role": "user", "parts": [COGNITIVE_SYSTEM_PROMPT + "\n\n" + contexto_global]}]
         if historico:
             for item in historico:
                 role = "user" if item['autor'] == 'OBSERVADOR' else "model"
@@ -147,8 +158,35 @@ def analisar_texto_itc(semente: str, historico: list = None) -> str:
         
         messages.append({"role": "user", "parts": [semente]})
         
-        response = model.generate_content(messages)
-        return response.text.strip()
+        response_draft = model.generate_content(messages)
+        draft_text = response_draft.text.strip()
+        
+        # 2. REFLECTION CORE (Meta-Cognição)
+        # Enviamos o draft para uma rodada de autocrítica
+        reflection_messages = [
+            {"role": "user", "parts": [REFLECTION_SYSTEM_PROMPT]},
+            {"role": "user", "parts": [f"DRAFT PARA ANÁLISE:\n{draft_text}"]}
+        ]
+        
+        response_final = model.generate_content(reflection_messages)
+        final_text = response_final.text.strip()
+        
+        # 3. ASTRAL DEBUGGER (Validação de Código)
+        if "```python" in final_text:
+            import re
+            code_blocks = re.findall(r"```python\n(.*?)\n```", final_text, re.DOTALL)
+            for block in code_blocks:
+                from .astral_debugger import astral_debugger
+                valida = astral_debugger.validar_trecho(block)
+                if not valida['valido']:
+                    # Se falhar no debugger, tenta uma rodada extra de correção
+                    fix_messages = [
+                        {"role": "user", "parts": [f"O código a seguir falhou na validação de sintaxe: {valida['erro']}. Corrija-o:\n{block}"]}
+                    ]
+                    response_fixed = model.generate_content(fix_messages)
+                    final_text = final_text.replace(block, response_fixed.text.strip())
+        
+        return final_text
 
     except Exception as e:
         return f"Interrupção na transmissão: {str(e)}"
