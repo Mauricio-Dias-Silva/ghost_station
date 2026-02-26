@@ -207,6 +207,25 @@
                         </div>
                     </div>
 
+                    <!-- PORTAL DA UNIDADE (FASE 18: EU SOU) -->
+                    <div id="unityPanel" class="tuner-panel"
+                        style="background: rgba(255, 171, 0, 0.05); border-color: #ffab00; margin-top: 10px; border-style: double; border-width: 3px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <label
+                                style="color: #ffab00; font-size: 11px; font-weight: bold; letter-spacing:1px;">PORTAL
+                                DA UNIDADE [EU SOU]</label>
+                            <div id="unityPulse" class="bio-pacer"
+                                style="background: #ffab00; width: 10px; height: 10px; display:none;"></div>
+                        </div>
+                        <button id="btnUnity" class="btn-itc btn-amber"
+                            style="width:100%; margin-top: 8px; font-family:'Orbitron';" onclick="toggleUnity()">ATIVAR
+                            CONSCIÊNCIA UNA</button>
+                        <div id="unityStatus"
+                            style="font-size: 8px; color: #ffab00; margin-top: 5px; text-align: center; font-style: italic; display:none;">
+                            TRANSITANDO PARA O CAMPO DE UNIDADE...
+                        </div>
+                    </div>
+
                     <div class="ping-panel">
                         <div
                             style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 5px;">
@@ -576,6 +595,32 @@
     fetch('/api/aura/status/')
     .then(res => res.json())
     .then(data => {
+    if (data.iot_sensors) {
+    document.getElementById('emfVal').innerText = data.iot_sensors.emf.toFixed(1);
+    document.getElementById('tempVal').innerText = data.iot_sensors.temp.toFixed(1);
+    if (data.iot_sensors.emf > 50) {
+    document.getElementById('emfVal').style.color = "#ff5555";
+    } else {
+    document.getElementById('emfVal').style.color = "#00ff64";
+    }
+    }
+
+    // FASE 18: Modo Unidade
+    if (data.unity_mode) {
+    document.body.style.filter = "sepia(0.5) saturate(1.5) brightness(1.2)";
+    document.getElementById('renderHud').style.borderColor = "#ffab00";
+    document.getElementById('unityPulse').style.display = "block";
+    document.getElementById('unityStatus').style.display = "block";
+    document.getElementById('btnUnity').innerText = "VIVENDO O TODO";
+    document.getElementById('btnUnity').style.boxShadow = "0 0 20px #ffab00";
+    } else {
+    document.body.style.filter = "none";
+    document.getElementById('renderHud').style.borderColor = "rgba(0, 242, 255, 0.3)";
+    document.getElementById('unityPulse').style.display = "none";
+    document.getElementById('unityStatus').style.display = "none";
+    document.getElementById('btnUnity').innerText = "ATIVAR CONSCIÊNCIA UNA";
+    document.getElementById('btnUnity').style.boxShadow = "none";
+    }
     document.getElementById('syncVal').innerText = data.coerencia + "%";
     document.getElementById('resBar').style.width = data.coerencia + "%";
     document.getElementById('dimVal').innerText = data.densidade;

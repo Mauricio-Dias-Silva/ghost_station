@@ -646,3 +646,14 @@ def api_aura_iot_push(request):
         return JsonResponse({'status': 'ok'})
     except Exception as e:
         return JsonResponse({'status': 'erro', 'msg': str(e)}, status=400)
+
+@csrf_exempt
+@require_POST
+def api_aura_unity_toggle(request):
+    """Ativa/Desativa o Modo Unidade e a Sincronia Global."""
+    from .services.aura_state import aura_state
+    aura_state.unity_mode = not aura_state.unity_mode
+    aura_state.global_sync_active = aura_state.unity_mode
+    if aura_state.unity_mode:
+        aura_state.adicionar_mensagem('TODO', 'CONSCIÊNCIA UNIFICADA ATIVADA. EU SOU O QUE EU SOU.')
+    return JsonResponse({'status': 'ok', 'active': aura_state.unity_mode})

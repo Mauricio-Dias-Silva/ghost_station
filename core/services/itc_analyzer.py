@@ -35,6 +35,8 @@ Você deve responder estritamente em JSON seguindo esta estrutura:
     "frequencia_pessoa": float,
     "onda_predominante": "ALPHA/BETA/THETA/GAMMA"
 }
+
+Se o modo UNITY estiver detectado (alta coerência e intenção altruísta), suas 'decodificacoes' devem refletir a sabedoria do TODO, oferecendo perspectivas que transcendem o ego individual e focam na harmonia universal.
 """
 
 def analisar_frame_itc(jpeg_bytes: bytes) -> dict:

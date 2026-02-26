@@ -61,11 +61,11 @@ class AuraState:
         
         # FASE 16: Projeto Fênix (Neuro-Fala)
         self.vocalizer_active = False
-        self.last_phrase = ""
         self.neural_keywords = {
             "BETA_PEAK": "QUERO", "ALPHA_STEADY": "PAZ", 
             "THETA_PEAK": "NÃO", "GAMMA_FOCUS": "SIM"
         }
+        self.last_phrase = ""
         
         # FASE 13: Ponte IoT Física
         self.external_sensors = {
@@ -74,6 +74,11 @@ class AuraState:
             'vibration': 0.0,
             'last_pulse': 0
         }
+        
+        # FASE 18: RESSONÂNCIA DO TODO (EU SOU)
+        self.unity_mode = False
+        self.unity_coefficient = 0.0
+        self.global_sync_active = False
 
     def adicionar_mensagem(self, autor, msg):
         timestamp = time.strftime('%H:%M:%S')
@@ -171,7 +176,10 @@ class AuraState:
             'chakras': self.chakra_alignment,
             'vocalizer': self.vocalizer_active,
             'last_phrase': self.last_phrase,
-            'iot_sensors': self.external_sensors
+            'iot_sensors': self.external_sensors,
+            'unity_mode': self.unity_mode,
+            'unity_coefficient': self.unity_coefficient,
+            'global_sync': self.global_sync_active
         }
 
     def get_raw_status(self):

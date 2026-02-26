@@ -53,15 +53,25 @@ def renderizar_presenca(frame_bytes):
     elif aura_state.intencao_detectada == "MEDO":
         color_aura = [100, 100, 255] # Vermelho/Laranja
         
-    cv2.circle(aura_map, (w//2, h//2), int(h//3 * (coerencia/100)), color_aura, -1)
-    aura_map = cv2.GaussianBlur(aura_map, (99, 99), 0)
-    
-    # Aplicar Bio-Anomalias (Manchas vermelhas no mapa)
-    for i, anomalia in enumerate(aura_state.bio_anomalias):
-        pos_y = (h // 2) + (i * 40) - 60
-        cv2.circle(aura_map, (w//2 + 20, pos_y), 30, [0, 0, 255], -1)
-    
-    frame = cv2.addWeighted(frame, 0.7, aura_map, 0.3, 0)
+    if aura_state.unity_mode:
+        # Modo Unidade: Luz Dourada Expansiva
+        aura_state.unity_coefficient = min(100, aura_state.unity_coefficient + 0.5)
+        color_aura = [100, 215, 255] # Dourado (BGR)
+        expansion = int(h//2 * (aura_state.unity_coefficient / 100))
+        cv2.circle(aura_map, (w//2, h//2), expansion, color_aura, -1)
+        aura_map = cv2.GaussianBlur(aura_map, (151, 151), 0)
+        # Overlay mais forte
+        frame = cv2.addWeighted(frame, 0.6, aura_map, 0.4, 0)
+    else:    
+        cv2.circle(aura_map, (w//2, h//2), int(h//3 * (coerencia/100)), color_aura, -1)
+        aura_map = cv2.GaussianBlur(aura_map, (99, 99), 0)
+        
+        # Aplicar Bio-Anomalias (Manchas vermelhas no mapa)
+        for i, anomalia in enumerate(aura_state.bio_anomalias):
+            pos_y = (h // 2) + (i * 40) - 60
+            cv2.circle(aura_map, (w//2 + 20, pos_y), 30, [0, 0, 255], -1)
+        
+        frame = cv2.addWeighted(frame, 0.7, aura_map, 0.3, 0)
 
     # 3. Renderização de Bordas e Formas (Entidades)
     if coerencia > 60:

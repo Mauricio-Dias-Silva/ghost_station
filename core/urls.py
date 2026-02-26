@@ -39,4 +39,5 @@ urlpatterns = [
     path('api/aura/ping/', views.api_quantum_ping, name='api_aura_ping'),
     path('api/bio/update/', views.api_bio_update, name='api_bio_update'),
     path('blueprints/', views.blueprint_view, name='blueprints'),
+    path('api/aura/unity_toggle/', views.api_aura_unity_toggle, name='api_aura_unity_toggle'),
 ]
