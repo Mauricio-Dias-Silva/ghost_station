@@ -7,6 +7,7 @@ import time
 from .kardec_engine import kardec_engine
 from .space_weather import space_weather
 from .bio_state import bio_state
+from .hermetic_bridge import hermetic_bridge
 
 class AuraState:
     _instance = None
@@ -36,6 +37,43 @@ class AuraState:
         self.is_active = False
         self.start_time = None
         self.last_update = time.time()
+        
+        # FASE 11: Sintonizador & Diagnóstico
+        self.frequencia_sintonizada = 528.0  # Hz
+        self.intencao_detectada = "NEUTRA"
+        self.emocao_dominante = "CALMA"
+        self.bio_anomalias = []  # Ex: ["Bloqueio Cardíaco", "Fadiga Visual"]
+        self.frequencia_usuario = 0.0  # Frequência detectada via câmera
+        
+        # FASE 12: Neuro-Link & Bio-Link
+        self.neuro_link_active = False
+        self.brain_waves = {
+            'alpha': 0.0,
+            'beta': 0.0,
+            'theta': 0.0,
+            'gamma': 0.0
+        }
+        self.prana_level = 100.0 # Quantidade de energia (0-100)
+        self.chakra_alignment = {
+            'coronario': 100, 'frontal': 100, 'laringeo': 100,
+            'cardiaco': 100, 'umbilical': 100, 'sacro': 100, 'basico': 100
+        }
+        
+        # FASE 16: Projeto Fênix (Neuro-Fala)
+        self.vocalizer_active = False
+        self.last_phrase = ""
+        self.neural_keywords = {
+            "BETA_PEAK": "QUERO", "ALPHA_STEADY": "PAZ", 
+            "THETA_PEAK": "NÃO", "GAMMA_FOCUS": "SIM"
+        }
+        
+        # FASE 13: Ponte IoT Física
+        self.external_sensors = {
+            'emf': 0.0,
+            'temp': 25.0,
+            'vibration': 0.0,
+            'last_pulse': 0
+        }
 
     def adicionar_mensagem(self, autor, msg):
         timestamp = time.strftime('%H:%M:%S')
@@ -57,6 +95,11 @@ class AuraState:
             # Se for espírito puro, forçar densidade 5D
             if res['classe'] == 'PUROS':
                 self.densidade = "5D (PURA LUZ)"
+            
+            # Filtro Científico-Forense (Fase 9)
+            msg = hermetic_bridge.traduzir_conselho(msg)
+            # Atualizar a mensagem no histórico com a versão traduzida se necessário
+            self.historico_dialogo[-1]['mensagem'] = msg
 
         # Limitar histórico para não sobrecarregar o feed
         if len(self.historico_dialogo) > 50:
@@ -115,7 +158,28 @@ class AuraState:
             'metabolic': self.metabolic_energy,
             'is_active': self.is_active,
             'mensagens': self.historico_dialogo,
-            'ultima_semente': self.ultima_semente
+            'ultima_semente': self.ultima_semente,
+            'hermetic_metrics': hermetic_bridge.calcular_ressonancia_hermetica(self.get_raw_status()),
+            'freq_sintonizada': self.frequencia_sintonizada,
+            'freq_usuario': self.frequencia_usuario,
+            'intencao': self.intencao_detectada,
+            'emocao': self.emocao_dominante,
+            'anomalias': self.bio_anomalias,
+            'neuro_link': self.neuro_link_active,
+            'brain_waves': self.brain_waves,
+            'prana': self.prana_level,
+            'chakras': self.chakra_alignment,
+            'vocalizer': self.vocalizer_active,
+            'last_phrase': self.last_phrase,
+            'iot_sensors': self.external_sensors
+        }
+
+    def get_raw_status(self):
+        """Retorna apenas os valores numéricos sem formatação para a bridge."""
+        return {
+            'coerencia': self.coerencia,
+            'kp_index': self.kp_index,
+            'freq': self.frequencia_dominante
         }
 
 # Instância global

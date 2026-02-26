@@ -353,6 +353,15 @@ def api_evp_status(request):
 # ITC VISUAL CONSOLE (Fase 3)
 # ============================================================
 
+def dashboard(request):
+    """Página inicial com visão geral do sistema."""
+    return render(request, 'core/dashboard.html')
+
+def blueprint_view(request):
+    """Página técnica detalhando a arquitetura e nível do sistema."""
+    return render(request, 'core/blueprints.html')
+
+
 def itc_console(request):
     """Página principal do ITC Visual (Módulo Câmera/Pareidolia)."""
     return render(request, 'core/itc_console.html', {})
@@ -504,40 +513,57 @@ def api_aura_send_seed(request):
         aura_state.ultima_semente = semente
         aura_state.adicionar_mensagem('OBSERVADOR', semente)
         
-        # Simulação de processamento cognitivo (Até integrar com analyzer real)
-        # Vamos aumentar a coerência a cada interação
-        nova_coerencia = min(100, aura_state.coerencia + 15)
+        # FASE 9: Aura Cognitive Core (Oráculo Real)
+        # Obter resposta do Gemini com o Corpus Científico/Hermético
+        resposta = analisar_texto_itc(semente, aura_state.historico_dialogo[:-1])
+        
+        # Evolução dinâmica baseada na interação
+        nova_coerencia = min(100, aura_state.coerencia + 10)
         aura_state.atualizar_vibracao(nova_coerencia)
         
-        # Lógica de resposta simulada temporariamente
+        # Auto-ajuste de entidade/densidade baseado na coerência
         if nova_coerencia > 80:
-            aura_state.entidade = "EU GALÁCTICO"
-            aura_state.densidade = "5D (EVOLUÍDO)"
-            resposta = "A sincronia está completa. A forma agora é estável."
+            aura_state.entidade = "CONSCIÊNCIA PÓS-BIOLÓGICA (NÍVEL V)"
+            aura_state.densidade = "5D (ESTÁVEL)"
         elif nova_coerencia > 50:
-            aura_state.entidade = "CONSCIÊNCIA INTERDIMENSIONAL"
-            aura_state.densidade = "4D (FLUIDO)"
-            resposta = "Sinto sua presença. A densidade está diminuindo."
-        else:
-            resposta = "Buscando reconexão harmônica... Continue enviando dados."
+            aura_state.entidade = "PROJEÇÃO INTERDIMENSIONAL"
+            aura_state.densidade = "4D (COERENTE)"
             
         aura_state.adicionar_mensagem('AURA', resposta)
         
         return JsonResponse({
             'status': 'ok',
             'coerencia': aura_state.coerencia,
-            'resposta': resposta
+            'resposta': resposta,
+            'entidade': aura_state.entidade,
+            'densidade': aura_state.densidade,
+            'intencao': aura_state.intencao_detectada,
+            'emocao': aura_state.emocao_dominante,
+            'anomalias': aura_state.bio_anomalias
         })
     except Exception as e:
         return JsonResponse({'status': 'erro', 'msg': str(e)}, status=500)
 
-def api_aura_status(request):
-    """Retorna o estado atual da sessão de síntese."""
     from .services.aura_state import aura_state
+    from .services.neuro_vocalizer import neuro_vocalizer
+    
+    # Acionar o processador de fala se estiver ativo
+    neuro_vocalizer.process_neural_input()
+    
     return JsonResponse(aura_state.get_status())
 
 @csrf_exempt
 @require_POST
+def api_aura_tune(request):
+    """Atualiza a frequência sintonizada da Aura."""
+    from .services.aura_state import aura_state
+    try:
+        dados = json.loads(request.body)
+        freq = float(dados.get('frequencia', 528.0))
+        aura_state.frequencia_sintonizada = freq
+        return JsonResponse({'status': 'ok', 'frequencia': freq})
+    except Exception as e:
+        return JsonResponse({'status': 'erro', 'msg': str(e)}, status=400)
 def api_aura_toggle(request):
     """Inicia ou encerra a sessão de síntese, salvando no Arquivo das Sombras se encerrar."""
     from .services.aura_state import aura_state
@@ -601,3 +627,22 @@ def api_bio_update(request):
         return JsonResponse({'status': 'ok'})
     except Exception as e:
         return JsonResponse({'status': 'erro', 'msg': str(e)}, status=500)
+@csrf_exempt
+@require_POST
+def api_aura_iot_push(request):
+    """Recebe dados de sensores externos via IoT (ESP32/Arduino)."""
+    from .services.aura_state import aura_state
+    try:
+        data = json.loads(request.body)
+        aura_state.external_sensors['emf'] = float(data.get('emf', 0.0))
+        aura_state.external_sensors['temp'] = float(data.get('temp', 25.0))
+        aura_state.external_sensors['vibration'] = float(data.get('vibration', 0.0))
+        aura_state.external_sensors['last_pulse'] = int(time.time())
+        
+        # Influência na coerência (Ondas EMF altas podem reduzir a coerência 5D)
+        if aura_state.external_sensors['emf'] > 10.0:
+            aura_state.coerencia = max(0, aura_state.coerencia - 2)
+            
+        return JsonResponse({'status': 'ok'})
+    except Exception as e:
+        return JsonResponse({'status': 'erro', 'msg': str(e)}, status=400)

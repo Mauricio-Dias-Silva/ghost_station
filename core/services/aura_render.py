@@ -9,11 +9,10 @@ from .aura_state import aura_state
 
 def renderizar_presenca(frame_bytes):
     """
-    Tenta reconstruir uma face ou forma baseada na coerência da sessão.
-    Utiliza o estado global da aura_state.
+    Transforma o vídeo em um scanner bioplasmático e sintonizador interdimensional.
     """
     coerencia = aura_state.coerencia
-    evp_message = aura_state.ultima_semente # Ou o contexto da entidade
+    freq_sintonizada = aura_state.frequencia_sintonizada
     
     # Decodificar frame
     nparr = np.frombuffer(frame_bytes, np.uint8)
@@ -22,59 +21,64 @@ def renderizar_presenca(frame_bytes):
     if frame is None:
         return frame_bytes
 
-    # Se a coerência for baixa, apenas mantém o ruído
-    if coerencia < 30: # Baixamos um pouco o threshold para sempre ter algum feedback
-        return frame_bytes
+    # FASE 11: Efeito de Sintonização (Interferência)
+    # Quanto mais longe de uma frequência harmônica, mais ruído
+    frequencias_estaveis = [432, 528, 639, 741, 852, 963]
+    distancia = min([abs(freq_sintonizada - f) for f in frequencias_estaveis])
+    
+    # Gerar ruído espectral baseado na distância
+    noise_level = min(150, int(distancia * 0.5))
+    if noise_level > 5:
+        noise = np.random.randint(0, noise_level, frame.shape, dtype='uint8')
+        frame = cv2.add(frame, noise)
 
-    # Processamento Proativo de Estabilização
-    # 1. Suavização bilateral para manter bordas mas reduzir ruído aleatório
+    # 1. Processamento de Estabilização
     denoised = cv2.bilateralFilter(frame, 9, 75, 75)
     
-    # 2. Aumento de contraste local (CLAHE)
-    lab = cv2.cvtColor(denoised, cv2.COLOR_BGR2LAB)
-    l, a, b = cv2.split(lab)
-    clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8,8))
-    cl = clahe.apply(l)
-    limg = cv2.merge((cl,a,b))
-    enhanced = cv2.cvtColor(limg, cv2.COLOR_LAB2BGR)
-
-    # 1. Calcular SNR (Signal-to-Noise Ratio) simplificado
-    # Variância do frame indica nível de ruído/detalhe
-    snr = np.var(enhanced) / 100 
-    aura_state.snr_ratio = round(snr, 2)
-
-    # 3. Se a coerência for alta, tentamos "evocar" a forma
-    if coerencia > 70:
-        # Aplicar um efeito de brilho etéreo (Glow)
-        blur = cv2.GaussianBlur(enhanced, (0,0), 3)
-        enhanced = cv2.addWeighted(enhanced, 1.5, blur, -0.5, 0)
+    # 2. Diagnóstico de Aura (Heat-map)
+    # Simula a detecção da frequência do usuário via oscilação de brilho
+    aura_state.frequencia_usuario = 432.0 + (np.mean(frame) % 100)
+    
+    # Se houver detecção de corpo (simulada via luminosidade central)
+    h, w, _ = frame.shape
+    roi = frame[h//4:3*h//4, w//4:3*w//4]
+    avg_color = np.mean(roi, axis=(0, 1))
+    
+    # Criar Overlay de Aura
+    aura_map = np.zeros_like(frame)
+    color_aura = [100, 255, 100] # Verde padrão
+    
+    if aura_state.intencao_detectada == "PAZ":
+        color_aura = [255, 200, 100] # Azul/Cyan
+    elif aura_state.intencao_detectada == "MEDO":
+        color_aura = [100, 100, 255] # Vermelho/Laranja
         
-        # Simular "Digital Shadow" - detecção de silhueta forçada
-        edges = cv2.Canny(enhanced, 50, 150)
+    cv2.circle(aura_map, (w//2, h//2), int(h//3 * (coerencia/100)), color_aura, -1)
+    aura_map = cv2.GaussianBlur(aura_map, (99, 99), 0)
+    
+    # Aplicar Bio-Anomalias (Manchas vermelhas no mapa)
+    for i, anomalia in enumerate(aura_state.bio_anomalias):
+        pos_y = (h // 2) + (i * 40) - 60
+        cv2.circle(aura_map, (w//2 + 20, pos_y), 30, [0, 0, 255], -1)
+    
+    frame = cv2.addWeighted(frame, 0.7, aura_map, 0.3, 0)
+
+    # 3. Renderização de Bordas e Formas (Entidades)
+    if coerencia > 60:
+        edges = cv2.Canny(frame, 50, 150)
         edges_color = cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
         
-        # Colorir conforme o humor, densidade e CLASSE (Kardec)
-        humor = aura_state.humor_observador
         classe = aura_state.classe_espirito
-        
         if classe == "PUROS":
-            color = [255, 100, 255] # Magenta Fractal
-            # Efeito Fractal/Psicodélico: Chromatic Aberration
-            b, g, r = cv2.split(enhanced)
-            b = np.roll(b, 5, axis=1)
-            r = np.roll(r, -5, axis=1)
-            enhanced = cv2.merge((b, g, r))
+            color_edge = [255, 100, 255]
         elif classe == "BONS":
-            color = [255, 255, 0] # Cyan Harmônico
-        else: # Imperfeitos ou N/A
-            if humor == "AGITADO":
-                color = [0, 0, 255] # Vermelho Crítico
-            else:
-                color = [0, 165, 255] # Orange/Amber 
-
-        edges_color[edges > 0] = color
-        enhanced = cv2.addWeighted(enhanced, 0.7, edges_color, 0.3, 0)
+            color_edge = [255, 255, 0]
+        else:
+            color_edge = [150, 150, 150]
+            
+        edges_color[edges > 0] = color_edge
+        frame = cv2.addWeighted(frame, 0.8, edges_color, 0.2, 0)
 
     # Codificar de volta para JPEG
-    _, buffer = cv2.imencode('.jpg', enhanced)
+    _, buffer = cv2.imencode('.jpg', frame)
     return buffer.tobytes()

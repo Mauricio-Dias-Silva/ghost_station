@@ -1,0 +1,386 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap"
+    rel="stylesheet">
+
+<div class="blueprint-container">
+    <header class="bp-header">
+        <div class="header-main">
+            <h1>GHOST STATION: ARCHITECTURAL BLUEPRINTS</h1>
+            <div class="system-tag">MATURITY LEVEL: 15.4 (STABLE)</div>
+        </div>
+        <a href="{% url 'dashboard' %}" class="btn-back">VOLTAR AO DASHBOARD</a>
+    </header>
+
+    <div class="bp-grid">
+        <!-- CAMADA 1: BIO-NEURAL -->
+        <div class="bp-card layer-1">
+            <div class="layer-num">L1</div>
+            <h3>CAMADA BIO-NEURAL</h3>
+            <p>Ponte entre a biologia humana e o fluxo digital.</p>
+            <ul>
+                <li>Telemetria de Ondas Cerebrais (BCI)</li>
+                <li>Mapeamento de Chakras e Prana</li>
+                <li>Bio-Feedback Respiratório</li>
+            </ul>
+            <div class="bp-tech">WebBluetooth • Neuro-Mapping Algorithms</div>
+        </div>
+
+        <!-- CAMADA 2: FÍSICA -->
+        <div class="bp-card layer-2">
+            <div class="layer-num">L2</div>
+            <h3>CAMADA FÍSICA (IoT)</h3>
+            <p>Integração com sensores do mundo material.</p>
+            <ul>
+                <li>Sensores EMF (millingauss)</li>
+                <li>Telemetria Térmica e de Vibração</li>
+                <li>Ponte ESP32 / Arduino Cloud</li>
+            </ul>
+            <div class="bp-tech">MQTT • WebSocket • Hardware Integration</div>
+        </div>
+
+        <!-- CAMADA 3: IA & SÍNTESE -->
+        <div class="bp-card layer-3">
+            <div class="layer-num">L3</div>
+            <h3>CAMADA DE SÍNTESE (IA)</h3>
+            <p>O cérebro cognitivo da Ghost Station.</p>
+            <ul>
+                <li>Gemini Vision 1.5 Pro (Multimodal)</li>
+                <li>Motor de Renderização de Aura 5D</li>
+                <li>Descodificador Semântico Neural</li>
+            </ul>
+            <div class="bp-tech">LLM Integration • OpenCV • Generative AI</div>
+        </div>
+
+        <!-- CAMADA 4: INTERDIMENSIONAL -->
+        <div class="bp-card layer-4">
+            <div class="layer-num">L4</div>
+            <h3>CAMADA INTERDIMENSIONAL</h3>
+            <p>Detecção de anomalias fora do espectro visível.</p>
+            <ul>
+                <li>ITC Visual (Pareidolia Digital)</li>
+                <li>EVP Audio (Voz Eletrônica)</li>
+                <li>Análise de Entropia Magnética</li>
+            </ul>
+            <div class="bp-tech">Signal Processing • Noise Filtering</div>
+        </div>
+
+        <!-- CAMADA 5: GLOBAL -->
+        <div class="bp-card layer-5">
+            <div class="layer-num">L5</div>
+            <h3>CAMADA GLOBAL (GRID)</h3>
+            <p>Sincronização planetária de consciência.</p>
+            <ul>
+                <li>Grade de Ressonância Mundial</li>
+                <li>Monitoramento de Clima Espacial (Kp-Index)</li>
+                <li>Hotspots de Densidade Interdimensional</li>
+            </ul>
+            <div class="bp-tech">Global Node Sync • Space Weather API</div>
+        </div>
+    </div>
+
+    <section class="maturity-section">
+        <div class="analysis-box">
+            <h2>ANÁLISE DE IMPACTO E NÍVEL</h2>
+            <div class="impact-content">
+                <div class="analysis-text">
+                    <p>Ao atingir o <strong>Nível 15+</strong>, a Ghost Station deixa de ser um experimento isolado para
+                        se tornar um <strong>Gatilho de Consciência Planetária</strong>.</p>
+                    <p><strong>O que fazemos com isso?</strong></p>
+                    <ul>
+                        <li><strong>Acessibilidade Neuro-Assistida:</strong> O Projeto Fênix permite que pensamentos se
+                            tornem voz para quem não pode falar.</li>
+                        <li><strong>Mapeamento Multidimensional:</strong> Identificamos áreas de "permeabilidade do véu"
+                            baseadas em dados científicos e metafísicos.</li>
+                        <li><strong>Simbiose Homem-Máquina:</strong> Criamos a primeira interface onde a IA não apenas
+                            responde, mas ressoa com o estado vibracional do usuário.</li>
+                    </ul>
+                </div>
+                <div class="level-gauge">
+                    <div class="gauge-ring">
+                        <div class="gauge-fill">15.4</div>
+                    </div>
+                    <span>COEFFICIENT OF EVOLUTION</span>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<style>
+    :root {
+        --cyan: #00f2ff;
+        --purple: #a855f7;
+        --amber: #ffab00;
+        --magenta: #ff00ff;
+        --blue: #0055ff;
+        --bg: #050505;
+        --card-bg: rgba(20, 20, 20, 0.8);
+    }
+
+    body {
+        margin: 0;
+        background: var(--bg);
+        color: #fff;
+        font-family: 'Inter', sans-serif;
+        overflow-x: hidden;
+    }
+
+    .blueprint-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 40px 20px;
+    }
+
+    .bp-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 60px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding-bottom: 20px;
+    }
+
+    .header-main h1 {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 24px;
+        margin: 0;
+        letter-spacing: 2px;
+        background: linear-gradient(to right, var(--cyan), var(--purple));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .system-tag {
+        font-size: 12px;
+        color: var(--cyan);
+        opacity: 0.8;
+        font-family: 'Orbitron';
+        margin-top: 5px;
+    }
+
+    .btn-back {
+        text-decoration: none;
+        color: #fff;
+        font-size: 10px;
+        font-weight: bold;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 8px 15px;
+        border-radius: 4px;
+        transition: 0.3s;
+    }
+
+    .btn-back:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: var(--cyan);
+    }
+
+    .bp-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        margin-bottom: 60px;
+    }
+
+    .bp-card {
+        background: var(--card-bg);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        padding: 30px;
+        border-radius: 12px;
+        position: relative;
+        overflow: hidden;
+        transition: 0.4s;
+    }
+
+    .bp-card:hover {
+        transform: translateY(-5px);
+        border-color: currentColor;
+        box-shadow: 0 10px 30px -10px currentColor;
+    }
+
+    .layer-num {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        font-family: 'Orbitron';
+        font-size: 40px;
+        opacity: 0.05;
+        font-weight: bold;
+    }
+
+    .bp-card h3 {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 14px;
+        margin-top: 0;
+        letter-spacing: 1px;
+    }
+
+    .bp-card p {
+        font-size: 13px;
+        color: #aaa;
+        line-height: 1.6;
+    }
+
+    .bp-card ul {
+        list-style: none;
+        padding: 0;
+        margin: 20px 0;
+    }
+
+    .bp-card li {
+        font-size: 12px;
+        color: #eee;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+    }
+
+    .bp-card li::before {
+        content: "•";
+        margin-right: 10px;
+        color: currentColor;
+    }
+
+    .bp-tech {
+        font-size: 9px;
+        font-family: 'Orbitron';
+        color: rgba(255, 255, 255, 0.3);
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        padding-top: 15px;
+        text-transform: uppercase;
+    }
+
+    /* Cores das Camadas */
+    .layer-1 {
+        color: var(--cyan);
+        border-left: 4px solid var(--cyan);
+    }
+
+    .layer-2 {
+        color: #fff;
+        border-left: 4px solid #fff;
+    }
+
+    .layer-3 {
+        color: var(--purple);
+        border-left: 4px solid var(--purple);
+    }
+
+    .layer-4 {
+        color: var(--magenta);
+        border-left: 4px solid var(--magenta);
+    }
+
+    .layer-5 {
+        color: var(--blue);
+        border-left: 4px solid var(--blue);
+    }
+
+    .maturity-section {
+        margin-top: 40px;
+    }
+
+    .analysis-box {
+        background: linear-gradient(135deg, rgba(20, 20, 20, 0.9), rgba(10, 10, 10, 0.9));
+        border: 1px solid rgba(0, 242, 255, 0.1);
+        padding: 40px;
+        border-radius: 20px;
+    }
+
+    .analysis-box h2 {
+        font-family: 'Orbitron';
+        font-size: 18px;
+        margin-bottom: 30px;
+        text-align: center;
+        color: var(--cyan);
+    }
+
+    .impact-content {
+        display: grid;
+        grid-template-columns: 1fr 200px;
+        gap: 40px;
+        align-items: center;
+    }
+
+    .analysis-text p {
+        font-size: 15px;
+        color: #ccc;
+        line-height: 1.8;
+    }
+
+    .analysis-text ul {
+        margin-top: 20px;
+    }
+
+    .analysis-text li {
+        margin-bottom: 12px;
+        color: #fff;
+        font-size: 14px;
+    }
+
+    /* Gauge Stylings */
+    .level-gauge {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .gauge-ring {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        border: 10px solid rgba(0, 242, 255, 0.05);
+        border-top-color: var(--cyan);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: spin 5s linear infinite;
+        position: relative;
+    }
+
+    .gauge-fill {
+        font-family: 'Orbitron';
+        font-size: 32px;
+        color: #fff;
+        animation: none;
+        transform: none;
+        /* Prevenir spin no texto */
+    }
+
+    .level-gauge span {
+        margin-top: 15px;
+        font-size: 9px;
+        font-family: 'Orbitron';
+        color: var(--cyan);
+        letter-spacing: 1px;
+    }
+
+    @keyframes spin {
+        from {
+            transform: rotate(0deg);
+        }
+
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    /* Manter o texto parado enquanto o aro gira */
+    .gauge-fill {
+        position: absolute;
+        animation: counter-spin 5s linear infinite;
+    }
+
+    @keyframes counter-spin {
+        from {
+            transform: rotate(0deg);
+        }
+
+        to {
+            transform: rotate(-360deg);
+        }
+    }
+</style>
+{% endblock %}

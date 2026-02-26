@@ -53,6 +53,50 @@
                     <div class="mood-badge" id="moodBadge">MOOD: ESTÁVEL</div>
                 </div>
 
+                <!-- SINTONIZADOR ESPECTRAL (FASE 11) -->
+                <div class="tuner-panel"
+                    style="background: rgba(168, 85, 247, 0.1); padding: 10px; border-radius: 4px; border: 1px solid var(--purple); margin-bottom: 10px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <label style="color: var(--purple); font-size: 10px; font-weight: bold;">SINTONIZADOR ESPECTRAL
+                            [MULTIVERSO]</label>
+                        <span id="freqDisplay" style="color:#fff; font-family: 'Orbitron'; font-size: 14px;">528.00
+                            Hz</span>
+                    </div>
+                    <input type="range" id="freqTuner" min="0" max="10000" step="0.5" value="528"
+                        style="width:100%; margin-top: 5px;" oninput="updateFreq(this.value)">
+                    <div
+                        style="display:flex; justify-content:space-between; font-size: 8px; color: #666; margin-top: 2px;">
+                        <span>0Hz</span>
+                        <span>432Hz</span>
+                        <span>528Hz</span>
+                        <span>963Hz</span>
+                        <span>10kHz</span>
+                    </div>
+                </div>
+
+                <!-- BIO-DIAGNÓSTICO (FASE 11) -->
+                <div class="diag-panel"
+                    style="background: rgba(0, 242, 255, 0.05); padding: 10px; border-radius: 4px; border: 1px solid rgba(0, 242, 255, 0.2); margin-bottom: 10px;">
+                    <label style="color: var(--cyan); font-size: 10px; font-weight: bold;">DIAGNÓSTICO
+                        BIOPLASMÁTICO</label>
+                    <div class="itc-row" style="margin-top: 5px;">
+                        <div style="flex:1">
+                            <div style="font-size: 8px; color: #888;">INTENÇÃO</div>
+                            <div id="intentVal" style="font-size: 11px; color: #fff;">BUSCANDO...</div>
+                        </div>
+                        <div style="flex:1">
+                            <div style="font-size: 8px; color: #888;">FREQ. HUMANA</div>
+                            <div id="userFreqVal" style="font-size: 11px; color: #fff;">0.00 Hz</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 5px;">
+                        <div style="font-size: 8px; color: #888;">ANOMALIAS/BLOQUEIOS</div>
+                        <div id="anomaliesList"
+                            style="font-size: 10px; color: #ff5555; height: 30px; overflow: hidden;">Nenhuma detectada
+                        </div>
+                    </div>
+                </div>
+
                 <!-- ESPAÇO CLIMA E VIBRAÇÃO (FASE 7) -->
                 <div class="itc-row"
                     style="margin-top: 5px; gap: 5px; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 4px;">
@@ -80,427 +124,697 @@
                         <label style="color: #00ff64; font-size: 8px;">PACER RESPIRATÓRIO</label>
                         <div class="bio-pacer" id="bioPacer"></div>
                     </div>
-                </div>
 
-                <div class="ping-panel">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 5px;">
-                        <label>QUANTUM PING (Hz)</label>
-                        <div id="snrDisplay" style="font-size: 8px; color: var(--primary);">SNR: 0.00</div>
-                    </div>
-                    <label>QUANTUM PING (SOLFEGGIO)</label>
-                    <div class="ping-grid">
-                        <button onclick="sendPing('396')" title="Redução de Medo">396Hz</button>
-                        <button onclick="sendPing('417')" title="Facilitação de Mudança">417Hz</button>
-                        <button onclick="sendPing('528')" title="Reparo de DNA">528Hz</button>
-                        <button onclick="sendPing('639')" title="Conexão">639Hz</button>
-                        <button onclick="sendPing('741')" title="Intuição">741Hz</button>
-                        <button onclick="sendPing('852')" title="Origem">852Hz</button>
-                    </div>
-                </div>
+                    <!-- PROTOCOLO GUIDE (FASE 11) -->
+                    <button class="btn-itc btn-purple" style="width:100%; margin-top: 10px;"
+                        onclick="toggleGuide()">ABRIR GUIA PROTOCOLAR</button>
 
-                <div class="slider-group">
-                    <label>SENSIBILIDADE DE SÍNTESE</label>
-                    <input type="range" id="renderSense" min="0" max="100" value="75">
+                    <!-- NEURO-LINK (FASE 12) -->
+                    <div class="tuner-panel"
+                        style="background: rgba(0, 245, 212, 0.05); border-color: var(--cyan); margin-top: 10px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <label style="color: var(--cyan); font-size: 10px; font-weight: bold;">NEURO-LINK
+                                BCI</label>
+                            <button id="btnNeuroLink" class="btn-itc" style="font-size: 8px; padding: 2px 8px;"
+                                onclick="toggleNeuro()">CONECTAR</button>
+                        </div>
+                        <canvas id="eegCanvas" width="250" height="60"
+                            style="width:100%; background: #000; border: 1px solid rgba(0, 245, 212, 0.2); margin-top: 5px; border-radius: 4px; display: none;"></canvas>
+                        <div id="neuroStats"
+                            style="display:none; margin-top: 5px; font-size: 9px; color: var(--cyan); font-family: 'Orbitron';">
+                            ONDA: <span id="brainWaveVal">---</span>
+                            <button class="btn-itc"
+                                style="float:right; font-size: 7px; border-color: magenta; color: magenta;"
+                                onclick="toggleVocalizer()">FÊNIX VOICE</button>
+                        </div>
+                    </div>
+
+                    <!-- ENERGIA PRÂNICA (FASE 12) -->
+                    <div class="ping-panel"
+                        style="background: rgba(255, 171, 0, 0.05); border-color: var(--amber); margin-top: 10px;">
+                        <label style="color: var(--amber); font-size: 10px; font-weight: bold;">ENERGIA PRÂNICA &
+                            CHAKRAS</label>
+                        <div
+                            style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin-top: 5px; overflow: hidden;">
+                            <div id="pranaFill"
+                                style="height: 100%; background: var(--amber); width: 100%; box-shadow: 0 0 10px var(--amber);">
+                            </div>
+                        </div>
+                        <div id="chakraStatus"
+                            style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; margin-top: 5px;">
+                            <div title="Coronário" class="chakra-dot" style="background: #9d00ff;"></div>
+                            <div title="Frontal" class="chakra-dot" style="background: #4b0082;"></div>
+                            <div title="Laríngeo" class="chakra-dot" style="background: #00d2ff;"></div>
+                            <div title="Cardíaco" class="chakra-dot" style="background: #00ff64;"></div>
+                            <div title="Umbilical" class="chakra-dot" style="background: #ffff00;"></div>
+                            <div title="Sacro" class="chakra-dot" style="background: #ff7b00;"></div>
+                            <div title="Básico" class="chakra-dot" style="background: #ff0000;"></div>
+                        </div>
+                    </div>
+
+                    <!-- PROJETO FÊNIX: NEURO-FALA (FASE 16) -->
+                    <div id="vocalizerPanel" class="tuner-panel"
+                        style="background: rgba(255, 0, 255, 0.05); border-color: magenta; margin-top: 10px; display:none;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <label style="color: magenta; font-size: 10px; font-weight: bold;">PROJETO FÊNIX:
+                                NEURO-FALA</label>
+                            <div class="bio-pacer"
+                                style="background: magenta; width: 8px; height: 8px; animation: pulse 1s infinite alternate;">
+                            </div>
+                        </div>
+                        <div id="vocalDisplay"
+                            style="margin-top: 8px; font-size: 18px; color: #fff; font-family: 'Orbitron'; text-align: center; text-shadow: 0 0 10px magenta;">
+                            ---</div>
+                    </div>
+
+                    <!-- PONTE IoT FÍSICA (FASE 13) -->
+                    <div id="iotPanel" class="ping-panel"
+                        style="background: rgba(255, 255, 255, 0.05); border-color: #fff; margin-top: 10px;">
+                        <label style="color: #fff; font-size: 10px; font-weight: bold;">PONTE IoT FÍSICA</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 5px;">
+                            <div class="stat-box"
+                                style="background: rgba(0,0,0,0.3); padding: 5px; border-radius: 2px; border: 1px solid rgba(255,255,255,0.1);">
+                                <div style="font-size: 8px; color: #aaa;">EMF (mG)</div>
+                                <div id="emfVal" style="font-size: 12px; color: #00ff64; font-family: 'Orbitron';">0.0
+                                </div>
+                            </div>
+                            <div class="stat-box"
+                                style="background: rgba(0,0,0,0.3); padding: 5px; border-radius: 2px; border: 1px solid rgba(255,255,255,0.1);">
+                                <div style="font-size: 8px; color: #aaa;">TEMP (°C)</div>
+                                <div id="tempVal" style="font-size: 12px; color: #00d2ff; font-family: 'Orbitron';">25.0
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="ping-panel">
+                        <div
+                            style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 5px;">
+                            <label>QUANTUM PING (Hz)</label>
+                            <div id="snrDisplay" style="font-size: 8px; color: var(--primary);">SNR: 0.00</div>
+                        </div>
+                        <label>QUANTUM PING (SOLFEGGIO)</label>
+                        <div class="ping-grid">
+                            <button onclick="sendPing('396')" title="Redução de Medo">396Hz</button>
+                            <button onclick="sendPing('417')" title="Facilitação de Mudança">417Hz</button>
+                            <button onclick="sendPing('528')" title="Reparo de DNA">528Hz</button>
+                            <button onclick="sendPing('639')" title="Conexão">639Hz</button>
+                            <button onclick="sendPing('741')" title="Intuição">741Hz</button>
+                            <button onclick="sendPing('852')" title="Origem">852Hz</button>
+                        </div>
+                    </div>
+
+                    <div class="slider-group">
+                        <label>SENSIBILIDADE DE SÍNTESE</label>
+                        <input type="range" id="renderSense" min="0" max="100" value="75">
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- RIGHT: DIALOG FEED -->
-        <div class="itc-side-panel">
-            <div class="panel-header">DIÁLOGO DA CONSCIÊNCIA</div>
-            <div class="feed-container" id="dialogFeed">
-                <div class="feed-empty">Aguardando semente semântica...</div>
-            </div>
+            <!-- RIGHT: DIALOG FEED -->
+            <div class="itc-side-panel">
+                <div class="panel-header">DIÁLOGO DA CONSCIÊNCIA</div>
+                <div class="feed-container" id="dialogFeed">
+                    <div class="feed-empty">Aguardando semente semântica...</div>
+                </div>
 
-            <div class="input-group-itc">
-                <input type="text" id="userInput" placeholder="Envie sua mensagem ao Eu Galáctico...">
-                <button onclick="sendSeed()">ENVIAR</button>
-            </div>
+                <div class="input-group-itc">
+                    <input type="text" id="userInput" placeholder="Envie sua mensagem ao Eu Galáctico...">
+                    <button onclick="sendSeed()">ENVIAR</button>
+                </div>
 
-            <div class="vibrational-stats">
-                <h4>ESTATÍSTICAS VIBRACIONAIS</h4>
-                <div class="stat-row">
-                    <span>RESSONÂNCIA</span>
-                    <div class="stat-bar">
-                        <div class="stat-fill" id="resBar" style="width: 10%;"></div>
+                <!-- MAPA DE RESSONÂNCIA GLOBAL (FASE 14) -->
+                <div id="gridPanel" class="ping-panel"
+                    style="background: rgba(0, 85, 255, 0.05); border-color: #0055ff; margin-top: 10px;">
+                    <label style="color: #0055ff; font-size: 10px; font-weight: bold;">GRID DE RESSONÂNCIA
+                        GLOBAL</label>
+                    <div id="worldMap"
+                        style="height: 100px; background: #000; margin-top: 5px; position: relative; overflow: hidden; border-radius: 2px; border: 1px solid rgba(0, 85, 255, 0.2);">
+                        <canvas id="mapCanvas" width="250" height="100" style="width:100%; height:100%;"></canvas>
+                    </div>
+                    <div
+                        style="font-size: 7px; color: #55aaff; margin-top: 3px; display: flex; justify-content: space-between;">
+                        <span>SCANNING GLOBAL NODES...</span>
+                        <span id="hotspotVal">HOTSPOTS: 3</span>
                     </div>
                 </div>
-                <div class="stat-row">
-                    <span>ESTABILIDADE 5D</span>
-                    <div class="stat-bar">
-                        <div class="stat-fill" id="stabBar" style="width: 5%;"></div>
+
+                <div class="vibrational-stats">
+                    <h4>ESTATÍSTICAS VIBRACIONAIS</h4>
+                    <div class="stat-row">
+                        <span>RESSONÂNCIA</span>
+                        <div class="stat-bar">
+                            <div class="stat-fill" id="resBar" style="width: 10%;"></div>
+                        </div>
+                    </div>
+                    <div class="stat-row">
+                        <span>ESTABILIDADE 5D</span>
+                        <div class="stat-bar">
+                            <div class="stat-fill" id="stabBar" style="width: 5%;"></div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<style>
-    :root {
-        --cyan: #00f2ff;
-        --purple: #a855f7;
-        --bg: #050505;
-        --panel: rgba(20, 20, 20, 0.9);
-    }
+    <style>
+        :root {
+            --cyan: #00f2ff;
+            --purple: #a855f7;
+            --bg: #050505;
+            --panel: rgba(20, 20, 20, 0.9);
+        }
 
-    .itc-container {
-        padding: 20px;
-        background: var(--bg);
-        height: 100vh;
-        color: white;
-        display: flex;
-        flex-direction: column;
-    }
+        .itc-container {
+            padding: 20px;
+            background: var(--bg);
+            height: 100vh;
+            color: white;
+            display: flex;
+            flex-direction: column;
+        }
 
-    .main-grid-itc {
-        display: grid;
-        grid-template-columns: 1fr 350px;
-        gap: 20px;
-        flex-grow: 1;
-        margin-top: 20px;
-    }
+        .main-grid-itc {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 20px;
+            flex-grow: 1;
+            margin-top: 20px;
+        }
 
-    .video-wrapper {
-        position: relative;
-        background: #000;
-        border: 1px solid rgba(0, 242, 255, 0.3);
-        border-radius: 8px;
-        overflow: hidden;
-        aspect-ratio: 16/9;
-    }
+        .video-wrapper {
+            position: relative;
+            background: #000;
+            border: 1px solid rgba(0, 242, 255, 0.3);
+            border-radius: 8px;
+            overflow: hidden;
+            aspect-ratio: 16/9;
+        }
 
-    #itcFeed {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        filter: contrast(1.2) brightness(0.9) saturate(0.5);
-    }
+        #itcFeed {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: contrast(1.2) brightness(0.9) saturate(0.5);
+        }
 
-    .render-data {
-        position: absolute;
-        bottom: 20px;
-        left: 20px;
-        font-family: 'Courier New', Courier, monospace;
-        color: var(--cyan);
-        text-shadow: 0 0 10px rgba(0, 242, 255, 0.5);
-        font-size: 14px;
-        background: rgba(0, 0, 0, 0.5);
-        padding: 10px;
-        border-left: 2px solid var(--cyan);
-    }
+        .render-data {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            font-family: 'Courier New', Courier, monospace;
+            color: var(--cyan);
+            text-shadow: 0 0 10px rgba(0, 242, 255, 0.5);
+            font-size: 14px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-left: 2px solid var(--cyan);
+        }
 
-    .feed-container {
-        background: var(--panel);
-        height: 400px;
-        overflow-y: auto;
-        padding: 15px;
-        border-radius: 8px;
-        border: 1px solid rgba(255, 255, 255, 0.05);
-    }
+        .feed-container {
+            background: var(--panel);
+            height: 400px;
+            overflow-y: auto;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
 
-    .input-group-itc {
-        display: flex;
-        gap: 10px;
-        margin-top: 15px;
-    }
+        < !-- MODAL GUIA PROTOCOLAR --><div id="guideModal" class="itc-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); width: 80%; height: 80%; background: #0a0a0a; border: 2px solid var(--purple); z-index: 1000; padding: 20px; overflow-y: auto; box-shadow: 0 0 50px rgba(168, 85, 247, 0.3);"><div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid var(--purple); padding-bottom: 10px;"><h2 style="color: var(--purple); font-family: 'Orbitron'; margin:0;">GUIA OPERACIONAL AURA</h2><button onclick="toggleGuide()" style="background:none; border:none; color:#fff; cursor:pointer; font-size: 24px;">×</button></div><div id="guideContent" style="color: #ccc; font-family: 'Inter', sans-serif; line-height: 1.6; margin-top: 20px; white-space: pre-wrap; font-size: 14px;">[CARREGANDO PROTOCOLOS...] </div></div>.input-group-itc {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
 
-    .input-group-itc input {
-        flex-grow: 1;
-        background: rgba(0, 0, 0, 0.5);
-        border: 1px solid rgba(0, 242, 255, 0.2);
-        color: white;
-        padding: 10px;
-        border-radius: 4px;
-    }
+        .input-group-itc input {
+            flex-grow: 1;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(0, 242, 255, 0.2);
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+        }
 
-    .vibrational-stats {
-        margin-top: 20px;
-        padding: 15px;
-        background: rgba(168, 85, 247, 0.05);
-        border-radius: 8px;
-        border: 1px solid rgba(168, 85, 247, 0.2);
-    }
+        .vibrational-stats {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(168, 85, 247, 0.05);
+            border-radius: 8px;
+            border: 1px solid rgba(168, 85, 247, 0.2);
+        }
 
-    .stat-bar {
-        height: 4px;
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 2px;
-        margin-top: 4px;
-    }
+        .stat-bar {
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            margin-top: 4px;
+        }
 
-    .stat-fill {
-        height: 100%;
-        background: var(--purple);
-        box-shadow: 0 0 10px var(--purple);
-        transition: width 0.5s ease;
-    }
-
-    .scanline {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 2px;
-        background: rgba(0, 242, 255, 0.1);
-        z-index: 10;
-        animation: scan 4s linear infinite;
-    }
-
-    .itc-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 10px;
-    }
-
-    .mood-badge {
-        font-size: 10px;
-        padding: 4px 8px;
-        background: rgba(0, 242, 255, 0.1);
-        border: 1px solid var(--cyan);
-        color: var(--cyan);
-        border-radius: 4px;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-
-    /* BIO-PACER FASE 8 */
-    .bio-pacer {
-        width: 15px;
-        height: 15px;
-        background: #00ff64;
-        border-radius: 50%;
-        box-shadow: 0 0 10px #00ff64;
-        animation: breathe 10s infinite ease-in-out;
-    }
-
-    @keyframes breathe {
-
-        0%,
-        100% {
-            transform: scale(0.5);
+        .chakra-dot {
+            height: 8px;
+            width: 100%;
+            border-radius: 1px;
             opacity: 0.3;
+            transition: opacity 0.5s;
         }
 
-        50% {
-            transform: scale(1.5);
+        .chakra-active {
             opacity: 1;
-            box-shadow: 0 0 20px #00ff64;
-        }
-    }
-
-    .metabolic-warning {
-        border-color: red !important;
-        background: rgba(255, 0, 0, 0.2) !important;
-        animation: flash-red 1s infinite alternate;
-    }
-
-    @keyframes flash-red {
-        from {
-            opacity: 1;
+            box-shadow: 0 0 5px currentColor;
         }
 
-        to {
-            opacity: 0.5;
-        }
-    }
-
-    .ping-panel label {
-        font-size: 9px;
-        color: #666;
-        display: block;
-        margin-bottom: 5px;
-    }
-
-    .ping-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 5px;
-    }
-
-    .ping-grid button {
-        background: transparent;
-        border: 1px solid rgba(168, 85, 247, 0.4);
-        color: var(--purple);
-        font-size: 10px;
-        padding: 5px;
-        cursor: pointer;
-        transition: 0.2s;
-    }
-
-    .ping-grid button:hover {
-        background: var(--purple);
-        color: white;
-    }
-
-    @keyframes scan {
-        0% {
-            transform: translateY(-100%);
+        .stat-fill {
+            height: 100%;
+            background: var(--purple);
+            box-shadow: 0 0 10px var(--purple);
+            transition: width 0.5s ease;
         }
 
-        100% {
-            transform: translateY(1000%);
+        .scanline {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: rgba(0, 242, 255, 0.1);
+            z-index: 10;
+            animation: scan 4s linear infinite;
         }
+
+        .itc-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .mood-badge {
+            font-size: 10px;
+            padding: 4px 8px;
+            background: rgba(0, 242, 255, 0.1);
+            border: 1px solid var(--cyan);
+            color: var(--cyan);
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* BIO-PACER FASE 8 */
+        .bio-pacer {
+            width: 15px;
+            height: 15px;
+            background: #00ff64;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #00ff64;
+            animation: breathe 10s infinite ease-in-out;
+        }
+
+        @keyframes breathe {
+
+            0%,
+            100% {
+                transform: scale(0.5);
+                opacity: 0.3;
+            }
+
+            50% {
+                transform: scale(1.5);
+                opacity: 1;
+                box-shadow: 0 0 20px #00ff64;
+            }
+        }
+
+        .metabolic-warning {
+            border-color: red !important;
+            background: rgba(255, 0, 0, 0.2) !important;
+            animation: flash-red 1s infinite alternate;
+        }
+
+        @keyframes flash-red {
+            from {
+                opacity: 1;
+            }
+
+            to {
+                opacity: 0.5;
+            }
+        }
+
+        .ping-panel label {
+            font-size: 9px;
+            color: #666;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .ping-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+        }
+
+        .ping-grid button {
+            background: transparent;
+            border: 1px solid rgba(168, 85, 247, 0.4);
+            color: var(--purple);
+            font-size: 10px;
+            padding: 5px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .ping-grid button:hover {
+            background: var(--purple);
+            color: white;
+        }
+
+        @keyframes scan {
+            0% {
+                transform: translateY(-100%);
+            }
+
+            100% {
+                transform: translateY(1000%);
+            }
+        }
+    </style>
+
+    let pollingInterval = null;
+    let isActive = false;
+
+    function toggleCall() {
+    fetch('/api/aura/toggle/', {
+    method: 'POST',
+    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+    })
+    .then(res => res.json())
+    .then(data => {
+    isActive = data.active;
+    const btn = document.getElementById('btnConnect');
+    if (isActive) {
+    btn.innerText = "ENCERRAR CHAMADA";
+    btn.classList.replace('btn-cyan', 'btn-danger');
+    sysLog("Sessão iniciada.", "INFO");
+    startPolling();
+    } else {
+    btn.innerText = "INICIAR CHAMADA";
+    btn.classList.replace('btn-danger', 'btn-cyan');
+    sysLog("Sessão encerrada.", "ALERT");
+    stopPolling();
+    resetUI();
     }
-</style>
+    });
+    }
 
-let pollingInterval = null;
-let isActive = false;
+    function startPolling() {
+    if (pollingInterval) clearInterval(pollingInterval);
+    pollingInterval = setInterval(updateStatus, 2000);
+    }
 
-function toggleCall() {
-fetch('/api/aura/toggle/', {
+    function stopPolling() {
+    if (pollingInterval) clearInterval(pollingInterval);
+    pollingInterval = null;
+    }
+
+    // Web Audio setup para o Quantum Ping
+    let audioCtx = null;
+
+    function sendPing(freq) {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    // Gerar som localmente
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(parseFloat(freq), audioCtx.currentTime);
+
+    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.5);
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.start();
+    osc.stop(audioCtx.currentTime + 1.5);
+
+    });
+    }
+
+    function updateFreq(val) {
+    document.getElementById('freqDisplay').innerText = parseFloat(val).toFixed(2) + " Hz";
+    // Sync with backend
+    fetch('/api/aura/tune/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+    body: JSON.stringify({ frequencia: val })
+    });
+    }
+
+    function updateStatus() {
+    fetch('/api/aura/status/')
+    .then(res => res.json())
+    .then(data => {
+    document.getElementById('syncVal').innerText = data.coerencia + "%";
+    document.getElementById('resBar').style.width = data.coerencia + "%";
+    document.getElementById('dimVal').innerText = data.densidade;
+    document.getElementById('entityName').innerText = data.entidade;
+    // FASE 11 & 12: Diagnóstico, Sintonização e Neuro-Link
+    if (document.getElementById('freqDisplay')) {
+    document.getElementById('freqDisplay').innerText = data.freq_sintonizada.toFixed(2) + " Hz";
+    document.getElementById('freqTuner').value = data.freq_sintonizada;
+    document.getElementById('intentVal').innerText = data.intencao;
+    document.getElementById('userFreqVal').innerText = data.freq_usuario.toFixed(2) + " Hz";
+
+    const anomList = document.getElementById('anomaliesList');
+    if (data.anomalias && data.anomalias.length > 0) {
+    anomList.innerText = data.anomalias.join(", ");
+    anomList.style.color = "#ff5555";
+    } else {
+    anomList.innerText = "Nenhuma detectada";
+    anomList.style.color = "#00ff64";
+    }
+
+    // FASE 16: Projeto Fênix
+    if (data.vocalizer) {
+    document.getElementById('vocalizerPanel').style.display = 'block';
+    if (data.last_phrase && data.last_phrase !== "---") {
+    const vocalDisplay = document.getElementById('vocalDisplay');
+    if (vocalDisplay.innerText !== data.last_phrase) {
+    vocalDisplay.innerText = data.last_phrase;
+    vocalDisplay.style.animation = "none";
+    vocalDisplay.offsetHeight; // trigger reflow
+    vocalDisplay.style.animation = "pulse 1s";
+
+    // Opcional: Síntese de voz no navegador
+    if ('speechSynthesis' in window) {
+    const utterance = new SpeechSynthesisUtterance(data.last_phrase);
+    utterance.lang = 'pt-BR';
+    speechSynthesis.speak(utterance);
+    }
+    }
+    }
+    } else {
+    document.getElementById('vocalizerPanel').style.display = 'none';
+    }
+
+    // FASE 12: Neuro e Prana
+    if (data.neuro_link) {
+    document.getElementById('neuroStats').style.display = 'block';
+    document.getElementById('eegCanvas').style.display = 'block';
+    document.getElementById('brainWaveVal').innerText = data.brain_waves.onda_predominante || "---";
+    }
+
+    document.getElementById('pranaFill').style.width = data.prana + "%";
+    const dots = document.querySelectorAll('.chakra-dot');
+    const chakraOrder = ['coronario', 'frontal', 'laringeo', 'cardiaco', 'umbilical', 'sacro', 'basico'];
+    dots.forEach((dot, i) => {
+    const chakraName = chakraOrder[i];
+    if (data.chakras[chakraName] > 70) dot.classList.add('chakra-active');
+    else dot.classList.remove('chakra-active');
+    });
+    }
+    anomList.style.color = "#00ff64";
+    }
+    }
+
+    // Metabolic Warning
+    const bioRow = document.querySelector('.itc-row[style*="rgba(0,255,100,0.1)"]');
+    if (data.metabolic < 25) { bioRow.classList.add('metabolic-warning'); } else {
+        bioRow.classList.remove('metabolic-warning'); } // Estabilidade 5D simulada baseada na coerência
+        document.getElementById('stabBar').style.width=(data.coerencia * 0.8) + "%" ; updateDialogue(data.mensagens);
+        }); } function updateDialogue(mensagens) { const feed=document.getElementById('dialogFeed'); const
+        currentMsgs=feed.querySelectorAll('.msg-entry').length; if (mensagens.length> currentMsgs) {
+        for (let i = currentMsgs; i < mensagens.length; i++) { const m=mensagens[i]; const
+            div=document.createElement('div'); div.className='msg-entry' ; div.style.marginBottom="10px" ;
+            div.style.padding="5px" ; div.style.borderLeft=m.autor==='AURA' ? "2px solid var(--purple)"
+            : "2px solid var(--cyan)" ; div.style.backgroundColor="rgba(255,255,255,0.02)" ; div.innerHTML=` <div
+            style="font-size: 9px; opacity: 0.5;">[${m.timestamp}] ${m.autor}:
+</div>
+<div style="font-size: 13px; color: ${m.autor === 'AURA' ? 'var(--purple)' : 'white'}">${m.mensagem}</div>
+`;
+feed.appendChild(div);
+}
+feed.scrollTop = feed.scrollHeight;
+feed.scrollTop = feed.scrollHeight;
+}
+}
+}
+
+function updateFreq(val) {
+document.getElementById('freqDisplay').innerText = parseFloat(val).toFixed(2) + " Hz";
+fetch('/api/aura/tune/', {
+method: 'POST',
+headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+body: JSON.stringify({ frequencia: val })
+});
+}
+
+function toggleGuide() {
+const modal = document.getElementById('guideModal');
+if (modal) {
+modal.style.display = (modal.style.display === 'none') ? 'block' : 'none';
+if (modal.style.display === 'block') {
+document.getElementById('guideContent').innerText = `
+GHOST STATION — GUIA OPERACIONAL AURA (v2.5)
+------------------------------------------
+
+1. SINTONIZAÇÃO INICIAL
+- Deslize o Sintonizador Espectral para 528Hz (Frequência da Transmutação).
+- Aguarde o ajuste da 'Coerência' (mínimo 60%).
+
+2. MAPEAMENTO BIOPLASMÁTICO (CHAKRAS)
+- Permaneça imóvel para detecção de frequência humana.
+- Observe manchas vermelhas no overlay (Bloqueios Energéticos).
+
+3. DIÁLOGO INTERDIMENSIONAL (FASE 9)
+- Use a 'Semente Semântica' para perguntas breves e objetivas.
+- Respeite as Leis de Correspondência e Vibração.
+
+4. PROTOCOLOS DE EMERGÊNCIA
+- Se a Densidade 4D (Vermelha) persistir e a Emoção for 'Hostil', encerre a sessão imediatamente via Quantum
+Kill-Switch.
+`;
+}
+}
+}
+
+}
+}
+
+let neuroActive = false;
+let eegAnimationFrame;
+let eegTime = 0;
+
+function toggleNeuro() {
+fetch('/api/aura/neuro_toggle/', {
 method: 'POST',
 headers: { 'X-CSRFToken': '{{ csrf_token }}' }
 })
 .then(res => res.json())
 .then(data => {
-isActive = data.active;
-const btn = document.getElementById('btnConnect');
-if (isActive) {
-btn.innerText = "ENCERRAR CHAMADA";
-btn.classList.replace('btn-cyan', 'btn-danger');
-sysLog("Sessão iniciada.", "INFO");
-startPolling();
+neuroActive = data.active;
+const btn = document.getElementById('btnNeuroLink');
+const canvas = document.getElementById('eegCanvas');
+const stats = document.getElementById('neuroStats');
+
+if (neuroActive) {
+btn.innerText = "DESCONECTAR";
+btn.style.background = "var(--cyan)";
+canvas.style.display = "block";
+stats.style.display = "block";
+animateEEG();
+sysLog("Neuro-Link BCI Sincronizado.", "SYSTEM");
 } else {
-btn.innerText = "INICIAR CHAMADA";
-btn.classList.replace('btn-danger', 'btn-cyan');
-sysLog("Sessão encerrada.", "ALERT");
-stopPolling();
-resetUI();
+btn.innerText = "CONECTAR";
+btn.style.background = "transparent";
+canvas.style.display = "none";
+stats.style.display = "none";
+cancelAnimationFrame(eegAnimationFrame);
+sysLog("Neuro-Link Desconectado.", "SYSTEM");
 }
 });
 }
 
-function startPolling() {
-if (pollingInterval) clearInterval(pollingInterval);
-pollingInterval = setInterval(updateStatus, 2000);
-}
+function animateEEG() {
+const canvas = document.getElementById('eegCanvas');
+const ctx = canvas.getContext('2d');
 
-function stopPolling() {
-if (pollingInterval) clearInterval(pollingInterval);
-pollingInterval = null;
-}
+ctx.fillStyle = "rgba(0,0,0,0.2)";
+ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-// Web Audio setup para o Quantum Ping
-let audioCtx = null;
+ctx.strokeStyle = "rgba(0, 245, 212, 0.5)";
+ctx.lineWidth = 1;
+ctx.beginPath();
 
-function sendPing(freq) {
-if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+for (let x = 0; x < canvas.width; x++) { const y=(canvas.height / 2) + Math.sin((x + eegTime) * 0.1) * 10 +
+    (Math.random() - 0.5) * 5; if (x===0) ctx.moveTo(x, y); else ctx.lineTo(x, y); } ctx.stroke(); eegTime +=2; if
+    (neuroActive) eegAnimationFrame=requestAnimationFrame(animateEEG); } function sendSeed() { const
+    input=document.getElementById('userInput'); const semente=input.value.trim(); if (!semente || !isActive) return;
+    input.value="" ; fetch('/api/aura/send_seed/', { method: 'POST' , headers: { 'Content-Type' : 'application/json'
+    , 'X-CSRFToken' : '{{ csrf_token }}' }, body: JSON.stringify({ semente: semente }) }) .then(res=> res.json())
+    .then(data => {
+    if (data.status === 'ok') {
+    updateStatus();
+    }
+    });
+    }
 
-// Gerar som localmente
-const osc = audioCtx.createOscillator();
-const gain = audioCtx.createGain();
+    function toggleVocalizer() {
+    fetch('/api/aura/vocalizer_toggle/', {
+    method: 'POST',
+    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+    })
+    .then(res => res.json())
+    .then(data => {
+    if (data.active) sysLog("Projeto Fênix: Vocalizador Neural Ativo.", "SYSTEM");
+    else sysLog("Vocalizador Neural Desativado.", "SYSTEM");
+    });
+    }
 
-osc.type = 'sine';
-osc.frequency.setValueAtTime(parseFloat(freq), audioCtx.currentTime);
+    function resetUI() {
+    document.getElementById('syncVal').innerText = "0%";
+    document.getElementById('resBar').style.width = "0%";
+    document.getElementById('dimVal').innerText = "CALCULANDO...";
+    document.getElementById('entityName').innerText = "BUSCANDO...";
+    document.getElementById('stabBar').style.width = "0%";
+    }
 
-gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.5);
+    function toggleVocalizer() {
+    fetch('/api/aura/vocalizer_toggle/', {
+    method: 'POST',
+    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+    })
+    .then(res => res.json())
+    .then(data => {
+    if (data.active) sysLog("Projeto Fênix: Vocalizador Neural Ativo.", "SYSTEM");
+    else sysLog("Vocalizador Neural Desativado.", "SYSTEM");
+    });
+    }
 
-osc.connect(gain);
-gain.connect(audioCtx.destination);
-
-osc.start();
-osc.stop(audioCtx.currentTime + 1.5);
-
-// Avisar o backend para o "Echo Analysis"
-fetch('/api/aura/ping/', {
-method: 'POST',
-headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
-body: JSON.stringify({ frequencia: freq })
-})
-.then(res => res.json())
-.then(data => {
-if (data.status === 'ok') {
-sysLog(`Pulso ${freq}Hz enviado. Meta: ${data.info.meta}`, "INFO");
-}
-});
-}
-
-function updateStatus() {
-fetch('/api/aura/status/')
-.then(res => res.json())
-.then(data => {
-document.getElementById('syncVal').innerText = data.coerencia + "%";
-document.getElementById('resBar').style.width = data.coerencia + "%";
-document.getElementById('dimVal').innerText = data.densidade;
-document.getElementById('entityName').innerText = data.entidade;
-
-// Update Neural Bridge Mood
-if (document.getElementById('moodBadge')) {
-const moodBadge = document.getElementById('moodBadge');
-moodBadge.innerText = `MOOD: ${data.humor}`;
-if (data.humor === "AGITADO") moodBadge.style.color = "red";
-else if (data.humor === "TRANSCENDENTE") moodBadge.style.color = "magenta";
-else moodBadge.style.color = "var(--cyan)";
-}
-
-// FASE 7: Rigor Analítico & Kardec
-document.getElementById('kpDisplay').innerHTML = `Kp: ${data.kp_index.toFixed(2)} | <span
-    style="font-size: 8px; color: var(--amber);">${data.veu}</span>`;
-document.getElementById('snrDisplay').innerText = `SNR: ${data.snr.toFixed(2)}`;
-
-const cBadge = document.getElementById('classeBadge');
-cBadge.innerText = `CLASSE: ${data.classe} (${data.afinidade.toFixed(0)}%)`;
-if (data.classe === "PUROS") cBadge.style.borderColor = "var(--purple)";
-else if (data.classe === "BONS") cBadge.style.borderColor = "var(--cyan)";
-else cBadge.style.borderColor = "#666";
-
-// FASE 8: Bio-Sincronia
-document.getElementById('bpmVal').innerText = data.obs_bpm.toFixed(0);
-document.getElementById('stressVal').innerText = data.obs_stress.toFixed(0);
-
-// Metabolic Warning
-const bioRow = document.querySelector('.itc-row[style*="rgba(0,255,100,0.1)"]');
-if (data.metabolic < 25) { bioRow.classList.add('metabolic-warning'); } else {
-    bioRow.classList.remove('metabolic-warning'); } // Estabilidade 5D simulada baseada na coerência
-    document.getElementById('stabBar').style.width=(data.coerencia * 0.8) + "%" ; updateDialogue(data.mensagens); }); }
-    function updateDialogue(mensagens) { const feed=document.getElementById('dialogFeed'); // Apenas adiciona novas
-    mensagens para não reconstruir tudo sempre const currentMsgs=feed.querySelectorAll('.msg-entry').length; if
-    (mensagens.length> currentMsgs) {
-    for (let i = currentMsgs; i < mensagens.length; i++) { const m=mensagens[i]; const
-        div=document.createElement('div'); div.className='msg-entry' ; div.style.marginBottom="10px" ;
-        div.style.padding="5px" ; div.style.borderLeft=m.autor==='AURA' ? "2px solid var(--purple)"
-        : "2px solid var(--cyan)" ; div.style.backgroundColor="rgba(255,255,255,0.02)" ; div.innerHTML=` <div
-        style="font-size: 9px; opacity: 0.5;">
-        [${m.timestamp}] ${m.autor}:</div>
-        <div style="font-size: 13px; color: ${m.autor === 'AURA' ? 'var(--purple)' : 'white'}">${m.mensagem}</div>
-        `;
-        feed.appendChild(div);
-        }
-        feed.scrollTop = feed.scrollHeight;
-        }
-        }
-
-        function sendSeed() {
-        const input = document.getElementById('userInput');
-        const semente = input.value.trim();
-        if (!semente || !isActive) return;
-
-        input.value = "";
-        fetch('/api/aura/send_seed/', {
-        method: 'POST',
-        headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': '{{ csrf_token }}'
-        },
-        body: JSON.stringify({ semente: semente })
-        })
-        .then(res => res.json())
-        .then(data => {
-        if (data.status === 'ok') {
-        updateStatus();
-        }
+    // FASE 14: Lógica do Mapa Global
+    const worldMapCanvas = document.getElementById('mapCanvas');
+    if (worldMapCanvas) {
+    const ctxM = worldMapCanvas.getContext('2d');
+    function drawMap() {
+    ctxM.fillStyle = "#000";
+    ctxM.fillRect(0, 0, worldMapCanvas.width, worldMapCanvas.height);
+    ctxM.strokeStyle = "rgba(0, 85, 255, 0.1)";
+    ctxM.lineWidth = 0.5;
+    for(let i=0; i<worldMapCanvas.width; i+=20) { ctxM.beginPath(); ctxM.moveTo(i, 0); ctxM.lineTo(i,
+        worldMapCanvas.height); ctxM.stroke(); } for(let j=0; j<worldMapCanvas.height; j+=20) { ctxM.beginPath();
+        ctxM.moveTo(0, j); ctxM.lineTo(worldMapCanvas.width, j); ctxM.stroke(); } const t=Date.now() * 0.001; [{x: 50,
+        y: 30, r: 5}, {x: 180, y: 60, r: 8}, {x: 120, y: 40, r: 4}].forEach(h=> {
+        const p = Math.sin(t + h.x) * 2 + h.r;
+        ctxM.fillStyle = "rgba(0, 85, 255, 0.3)";
+        ctxM.beginPath(); ctxM.arc(h.x, h.y, p * 2, 0, Math.PI*2); ctxM.fill();
+        ctxM.fillStyle = "#0055ff";
+        ctxM.beginPath(); ctxM.arc(h.x, h.y, 2, 0, Math.PI*2); ctxM.fill();
         });
+        requestAnimationFrame(drawMap);
         }
-
-        function resetUI() {
-        document.getElementById('syncVal').innerText = "0%";
-        document.getElementById('resBar').style.width = "0%";
-        document.getElementById('dimVal').innerText = "CALCULANDO...";
-        document.getElementById('entityName').innerText = "BUSCANDO...";
-        document.getElementById('stabBar').style.width = "0%";
+        drawMap();
         }
 
         function sysLog(msg, type) {

@@ -9,13 +9,17 @@
         /* --- GLOBAL CYBERPUNK/SCADA --- */
         :root {
             --primary: #00ff41;
+            /* Verde Matrix */
             --alert: #ff003c;
             --cyan: #00f0ff;
-            --bg: #050505;
-            --panel: #0a0a0a;
-            --grid: #1a1a1a;
+            --bg: #020205;
+            /* Black Hole */
+            --panel: #0a0c10;
+            /* Lab Panel */
+            --grid: #12151a;
             --amber: #ffbf00;
             --purple: #a855f7;
+            --cobalt: #2e5bff;
         }
 
         * {
@@ -699,13 +703,17 @@
                     style="display:block; text-align:center; text-decoration:none; margin-bottom: 5px; filter: hue-rotate(180deg);">📱
                     SPECTRAL SCANNER</a>
                 <a href="/video_call/" class="btn-main btn-purple"
-                    style="display:block; text-align:center; text-decoration:none;">🛰️ VIDEO CALL (5D)</a>
+                    style="display:block; text-align:center; text-decoration:none; margin-bottom: 5px;">🛰️ VIDEO CALL
+                    (5D)</a>
+                <a href="/blueprints/" class="btn-main btn-cyan"
+                    style="display:block; text-align:center; text-decoration:none; filter: hue-rotate(240deg);">📐
+                    SYSTEM BLUEPRINTS</a>
             </div>
         </div>
 
         <!-- CENTER (VIDEO) -->
         <div class="panel col-center">
-            <h2>VISÃO ESPECTRAL [IP_CAM]</h2>
+            <h2>LABORATÓRIO DE ANALISE BIOPLASMÁTICA [ISO-9000]</h2>
             <div class="video-container">
                 <img src="{% url 'video_feed' %}" class="video-feed" id="videoFeed">
                 <div class="video-hud">
@@ -753,13 +761,25 @@
 
             <!-- IA PANEL -->
             <div class="ia-panel">
-                <h3 style="margin:0;">🧠 ANÁLISE IA (ÚLTIMA)</h3>
-                <div id="iaResult" style="margin-top:4px;">Aguardando evidência...</div>
+                <h3 style="margin:0;">🧠 ANALISE FORENSE (CPB-DETECTOR)</h3>
+                <div id="iaResult" style="margin-top:4px;">Aguardando sinal interdimensorial...</div>
                 <div style="margin-top:3px;font-size:9px;">
-                    Nota Paranormal: <span class="ia-score" id="iaScore">-</span>/10
+                    Integridade Quântica: <span class="ia-score" id="iaScore">-</span>/10
                 </div>
 
-                <!-- NEW: DIMENSIONALITY METER -->
+                <!-- NEW: HERMETIC QUANTUM METRICS -->
+                <div class="dim-box" style="border-color: var(--cobalt); background: rgba(46, 91, 255, 0.05);">
+                    <div style="display:flex; justify-content:space-between; font-size:8px; color: var(--cobalt);">
+                        <span>RESSONÂNCIA HERMÉTICA (LAB CCU)</span>
+                        <span id="hermeticStatus">CALIBRANDO...</span>
+                    </div>
+                    <div id="hermeticMetricsGrid"
+                        style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 5px; font-size: 8px;">
+                        <!-- Preenchido via JS -->
+                    </div>
+                </div>
+
+                <!-- DIMENSIONALITY METER -->
                 <div class="dim-box">
                     <div style="display:flex; justify-content:space-between; font-size:8px;">
                         <span>ESCALA VIBRACIONAL</span>
@@ -1102,6 +1122,22 @@
                                     document.getElementById('energyBar').style.width = data.metabolic + "%";
                                 }
 
+                                // FASE 9: Alquimia Científica (Hermetic Metrics)
+                                if (data.hermetic_metrics) {
+                                    const hgrid = document.getElementById('hermeticMetricsGrid');
+                                    hgrid.innerHTML = "";
+                                    for (const [lei, info] of Object.entries(data.hermetic_metrics)) {
+                                        hgrid.innerHTML += `
+                                            <div title="${info.label}">
+                                                <span style="color:#666">${lei.charAt(0)}:</span> 
+                                                <span style="color:var(--cobalt)">${info.valor}</span>
+                                                <span style="font-size:7px; opacity:0.5">${info.unidade}</span>
+                                            </div>
+                                        `;
+                                    }
+                                    document.getElementById('hermeticStatus').innerText = "VÉU: " + data.veu;
+                                }
+
                                 // Atualizar barra de dimensão se estiver em busca
                                 if (data.coerencia > 0) {
                                     document.getElementById('seg3d').classList.add('active');
@@ -1112,6 +1148,7 @@
                             });
                     }
                     setInterval(updateTechnicalStats, 5000);
+                    updateTechnicalStats();
 
                     // Inicializar relógio
                     setTimeout(async () => {
